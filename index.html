@@ -32,13 +32,20 @@ table{border-collapse:collapse;width:100%;font-size:13px}td{padding:3px 6px;bord
 .rc{display:block;border:2px solid var(--bd);border-radius:12px;padding:12px;margin:8px 0;cursor:pointer;background:var(--bg)}.rc input{width:auto;margin-right:8px}.rc:has(input:checked){border-color:var(--ac);background:var(--pn)}.rc b{color:var(--ac)}
 .row{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--bd);padding:8px 0}.row:last-child{border:0}
 .big{font-size:16px;padding:14px}.pbar{height:6px;background:var(--bd);border-radius:4px;overflow:hidden;margin:6px 0}.pbar i{display:block;height:100%;background:var(--ac);width:0}
-</style></head><body><div class="w" id="app"><div class="pn">Cargando…</div></div>
+
+#pr{display:none}
+@media print{body{background:#fff!important}#app{display:none!important}#pr{display:block}@page{margin:14mm}
+.pp{color:#000;font:12px/1.35 system-ui,Arial,sans-serif}.ph{display:flex;gap:12px;align-items:center;border-bottom:2px solid #0d4a9e;padding-bottom:8px;margin-bottom:10px}.ph img{height:50px;max-width:110px;object-fit:contain}.ph h1{font-size:16px;color:#0d4a9e;margin:0}
+.pm{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin:8px 0}.pf{border-bottom:1px solid #444;min-height:28px}.pf span{display:block;font-size:9px;color:#555}.pf b{font-weight:600}
+.pl{font-size:10.5px;color:#333;border:1px solid #ccc;padding:5px 7px;margin:6px 0}.pt{width:100%;border-collapse:collapse}.pt th,.pt td{border:1px solid #bbb;padding:4px 5px;font-size:11.5px;text-align:left}.pt tr{break-inside:avoid}.pt th{background:#e9f0fa;-webkit-print-color-adjust:exact;print-color-adjust:exact}.pt td.c,.pt th.c{text-align:center;width:34px}
+.pt .of{display:inline-block;min-width:20px;border:1px solid #999;border-radius:50%;color:#666;text-align:center}.pt .on{display:inline-block;min-width:20px;border-radius:50%;background:#0d4a9e;color:#fff;font-weight:700;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact}.pfoot{font-size:9.5px;color:#555;margin-top:10px}}
+</style></head><body><div class="w" id="app"><div class="pn">Cargando…</div></div><div id="pr"></div>
 <script type="module">
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import {getFirestore,doc,collection,getDoc,setDoc,writeBatch,query,where,orderBy,onSnapshot,Timestamp,serverTimestamp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import {getFirestore,doc,collection,getDoc,setDoc,writeBatch,getDocs,deleteDoc,limit,query,where,orderBy,onSnapshot,Timestamp,serverTimestamp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 // 1) Pega aquí la configuración de tu app web de Firebase (ver LEEME.md)
-const FB={apiKey:"AIzaSyADVAj9cN9lP-yzbz8cJgWc1GsXJX5vqMY",authDomain:"pruebas-psicometricas-dc84e.firebaseapp.com",projectId:"pruebas-psicometricas-dc84e",appId:"1:690671217402:web:2708063ed0a220af01b743"};
+const FB={apiKey:"PEGA_AQUI",authDomain:"PEGA_AQUI",projectId:"PEGA_AQUI",appId:"PEGA_AQUI"};
 const PRO='Oscar Steven Rodriguez Bustos';
 const TESTS={
 dass21:{n:'DASS-21',full:'Escala de Depresión, Ansiedad y Estrés (DASS-21)',
@@ -62,20 +69,32 @@ async function patient(){
  const t=TESTS[v.t];$('app').innerHTML=HD(t.full,'Solicitado por '+v.n)
  +'<div class="pn"><h2>Tus datos</h2><label>Nombres y apellidos</label><input id="pn" maxlength="120"><div class="r2"><div><label>Tipo de documento</label><select id="pd"><option>C.C.</option><option>T.I.</option><option>C.E.</option><option>Pasaporte</option><option>PPT</option></select></div><div><label>Número de documento</label><input id="pc" inputmode="numeric" maxlength="30"></div></div></div>'
  +'<div class="pn"><h2>Consentimiento</h2><p style="font-size:13px;margin:0">Autorizo a mi profesional a recibir y tratar mis respuestas con fines exclusivamente clínicos, de manera confidencial y de acuerdo con la normatividad colombiana sobre protección de datos personales y secreto profesional. Entiendo que esta prueba es un instrumento de tamizaje y que, por sí sola, no constituye un diagnóstico.</p><label class="ck"><input type="checkbox" id="pk"> He leído y acepto lo anterior.</label></div>'
- +'<div class="pn"><h2>Instrucciones</h2><p style="margin:0 0 6px">'+esc(t.ins)+'</p><div class="lg">'+t.sc.map(x=>'<b>'+x[0]+'</b> = '+esc(x[1])).join('<br>')+'</div>'
+ +'<div class="pn"><h2>Instrucciones</h2><p style="margin:0 0 6px">'+esc(t.ins)+'</p><div class="lg">'+t.sc.map(x=>'<b>'+x[0]+'</b> = '+esc(x[1])).join('<br>')+'</div><button class="btn s sm" id="pb0" type="button">Imprimir formulario en blanco (PDF)</button>'
  +t.items.map((x,i)=>'<div class="it"><p>'+(i+1)+'. '+esc(x)+'</p><div class="op">'+t.sc.map(s=>'<label><input type="radio" name="q'+i+'" value="'+s[0]+'"><span>'+s[0]+'</span></label>').join('')+'</div></div>').join('')+'</div>'
  +'<div class="pn"><div id="pg" class="sub"></div><div class="pbar"><i id="pb"></i></div><button class="btn" id="fin" disabled>Enviar mis respuestas</button><div id="er" class="note" hidden></div></div>';
  const ans=()=>t.items.map((_,i)=>(document.querySelector('input[name=q'+i+']:checked')||{}).value);
  const upd=()=>{const n=ans().filter(Boolean).length;$('pg').textContent='Respondidas: '+n+' de '+t.items.length;$('pb').style.width=(100*n/t.items.length)+'%';$('fin').disabled=!(n===t.items.length&&$('pn').value.trim()&&$('pc').value.trim()&&$('pk').checked)};
- $('app').addEventListener('input',upd);$('app').addEventListener('change',upd);upd();
+ $('app').addEventListener('input',upd);$('app').addEventListener('change',upd);upd();$('pb0').onclick=()=>printDoc(v.t,null);
  $('fin').onclick=async()=>{$('fin').disabled=true;$('fin').textContent='Enviando…';
   try{const b=writeBatch(db);
    b.set(doc(db,'responses',ID),{t:v.t,name:$('pn').value.trim(),tipo:$('pd').value,doc:$('pc').value.trim(),ans:ans().join(''),consent:true,at:serverTimestamp()});
    b.update(doc(db,'invites',ID),{status:'done',doneAt:serverTimestamp()});await b.commit();
-   say('¡Gracias!','Tus respuestas fueron enviadas a tu profesional. Ya puedes cerrar esta página.')}
+   (()=>{const A=ans().join(''),M={name:$('pn').value.trim(),tipo:$('pd').value,doc:$('pc').value.trim(),at:Date.now()};
+    $('app').innerHTML=HD('¡Gracias!',PRO)+'<div class="pn">Tus respuestas fueron enviadas a tu profesional. Si quieres, guarda una copia tuya en PDF.</div><div class="pn"><button class="btn" id="pp">Descargar mis respuestas (PDF)</button></div>';$('pp').onclick=()=>printDoc(v.t,A,M)})()}
   catch(e){$('er').hidden=false;$('er').textContent='No se pudo enviar (posiblemente ya fue enviada o el enlace venció). Intenta de nuevo o contacta a tu profesional.';$('fin').disabled=false;$('fin').textContent='Enviar mis respuestas'}}
 }
 
+/* ===== IMPRESIÓN / PDF (en blanco o diligenciado) ===== */
+function printDoc(k,ans,m){const t=TESTS[k],a=ans?[...ans]:null;m=m||{};const d=ms=>new Date(ms).toLocaleDateString('es-CO');
+ const f=(l,v)=>'<div class="pf"><span>'+l+'</span><b>'+(v?esc(v):'')+'</b></div>';
+ const cols=t.sc.map(x=>x[0]);
+ $('pr').innerHTML='<div class="pp"><div class="ph">'+LOGO+'<div><h1>'+esc(t.full)+'</h1><div>'+esc(PRO)+' · Psicología</div></div></div>'
+ +'<div class="pm">'+f('Nombres y apellidos',m.name)+f('Documento',m.tipo?m.tipo+' '+m.doc:'')+f('Fecha',m.at?d(m.at):'')+'</div>'
+ +'<p>'+esc(t.ins)+'</p><div class="pl">'+t.sc.map(x=>'<b>'+x[0]+'</b> = '+esc(x[1])).join(' · ')+'</div>'
+ +'<table class="pt"><thead><tr><th class="c">#</th><th>Afirmación</th>'+cols.map(c=>'<th class="c">'+c+'</th>').join('')+'</tr></thead><tbody>'
+ +t.items.map((x,i)=>'<tr><td class="c">'+(i+1)+'</td><td>'+esc(x)+'</td>'+cols.map(c=>'<td class="c"><span class="'+(a&&a[i]==c?'on':'of')+'">'+c+'</span></td>').join('')+'</tr>').join('')+'</tbody></table>'
+ +'<div class="pfoot">'+(a?'Documento diligenciado a partir de las respuestas registradas el '+d(Date.now())+'. ':'Formato en blanco generado el '+d(Date.now())+'. ')+'Instrumento de tamizaje: por sí solo no constituye un diagnóstico.</div></div>';
+ addEventListener('afterprint',()=>{$('pr').innerHTML=''},{once:true});setTimeout(()=>print(),60)}
 /* ===== PROFESIONAL ===== */
 const DOM='@consultorio.app'; // el "correo" interno es solo el usuario + este sufijo; nunca se envían correos
 const INFO={dass21:{per:'Última semana',ref:['Original: Antony et al. (1998), Psychological Assessment, 10, 176-181.','Colombia: Ruiz et al. (2017), Int. J. Psychol. Psychol. Ther., 17, 97-105.'],corr:'Tres subescalas: Depresión (ítems 3, 5, 10, 13, 16, 17, 21), Ansiedad (2, 4, 7, 9, 15, 19, 20) y Estrés (1, 6, 8, 11, 12, 14, 18). El total es la suma de todos los ítems.'},
@@ -111,20 +130,25 @@ function vInicio(){const a=Object.values(C.it),n=a.length,nw=unseen(),l=a.reduce
  +'<div class="r2">'+go('enviar')+'Enviar una prueba</button>'+go('resp').replace('btn big','btn big s')+'Ver respuestas</button></div>'}
 function vEnviar(){const r=LK[0];
  return '<div class="pn"><h2>Elige el instrumento</h2>'+Object.entries(TESTS).map(([k,t])=>'<label class="rc"><input type="radio" name="st" value="'+k+'"'+(selT===k?' checked':'')+'><b>'+esc(t.n)+'</b> — '+esc(t.full)+'<br><span class="sub">'+t.items.length+' ítems · '+INFO[k].per+'</span></label>').join('')
- +'<button class="btn big" id="mk" data-a="mk">Generar enlace único</button><p class="sub">No necesitas escribir el nombre del paciente: él lo ingresa al responder. Cada enlace sirve para una sola persona y vence en 30 días.</p><div id="er" class="note" hidden></div></div>'
- +(LK.length?'<div class="pn"><h2>Últimos enlaces</h2>'+LK.map((x,i)=>'<div class="row"><div><b>'+esc(TESTS[x.t].n)+'</b> <span class="sub">'+fdt(x.at)+'</span><div class="lk">'+esc(x.l)+'</div></div><div><button class="btn sm" data-a="lk" data-i="'+i+'">Copiar</button><a class="btn sm s" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent('Hola, este es tu enlace para responder la prueba: '+x.l)+'">WhatsApp</a></div></div>').join('')+'</div>':'')}
+ +'<button class="btn big" id="mk" data-a="mk">Generar enlace único</button><button class="btn s" data-a="pb">Imprimir formulario en blanco (PDF)</button><p class="sub">No necesitas escribir el nombre del paciente: él lo ingresa al responder. Cada enlace sirve para una sola persona y vence en 30 días.</p><div id="er" class="note" hidden></div></div>'
+ +'<div class="pn"><h2>Enlaces</h2><button class="btn s sm" data-a="sync" style="margin:0 0 6px">Actualizar estados desde la nube</button>'+(LK.length?LK.map((x,i)=>{const stt=x.st?(x.st==='done'?'Respondido':(x.exp&&x.exp<Date.now()?'Vencido':'Pendiente')):'';return '<div class="row"><div><b>'+esc(TESTS[x.t]?TESTS[x.t].n:x.t)+'</b> <span class="sub">'+fdt(x.at)+'</span>'+(stt?'<span class="bg">'+stt+'</span>':'')+'<div class="lk">'+esc(x.l)+'</div></div><div><button class="btn sm" data-a="lk" data-i="'+i+'">Copiar</button><a class="btn sm s" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent('Hola, este es tu enlace para responder la prueba: '+x.l)+'">WhatsApp</a><button class="btn sm s" data-a="dl" data-i="'+i+'">Eliminar</button></div></div>'}).join(''):'<p class="sub">Aún no has generado enlaces en este dispositivo.</p>')+'</div>'}
 function listHTML(){const q=F.q.trim().toLowerCase();const a=Object.entries(C.it).filter(([,r])=>(!F.t||r.t===F.t)&&(!q||(r.name+' '+r.doc).toLowerCase().includes(q))).sort((x,y)=>y[1].at-x[1].at);
- return a.length?a.map(([id,r])=>{const t=TESTS[r.t];return '<details data-id="'+id+'"><summary><b>'+esc(r.name)+'</b> · '+esc(t.n)+' · '+fdt(r.at)+(seen.has(id)?'':'<span class="bg">nuevo</span>')+'</summary><p class="sub">'+esc(r.tipo)+' '+esc(r.doc)+'</p><table>'+[...r.ans].map((v,i)=>'<tr><td>'+(i+1)+'. '+esc(t.items[i]||'')+'</td><td>'+v+'</td></tr>').join('')+'</table><button class="btn sm s" data-a="cp" data-id="'+id+'">Copiar respuestas</button><button class="btn sm s" data-a="del" data-id="'+id+'">Eliminar</button></details>'}).join(''):'<p class="sub">No hay respuestas para mostrar.</p>'}
+ return a.length?a.map(([id,r])=>{const t=TESTS[r.t];return '<details data-id="'+id+'"><summary><b>'+esc(r.name)+'</b> · '+esc(t.n)+' · '+fdt(r.at)+(seen.has(id)?'':'<span class="bg">nuevo</span>')+'</summary><p class="sub">'+esc(r.tipo)+' '+esc(r.doc)+'</p><table>'+[...r.ans].map((v,i)=>'<tr><td>'+(i+1)+'. '+esc(t.items[i]||'')+'</td><td>'+v+'</td></tr>').join('')+'</table><button class="btn sm s" data-a="cp" data-id="'+id+'">Copiar respuestas</button><button class="btn sm s" data-a="pf" data-id="'+id+'">Imprimir diligenciado (PDF)</button><button class="btn sm s" data-a="pbr" data-id="'+id+'">Imprimir en blanco</button><button class="btn sm s" data-a="del" data-id="'+id+'">Eliminar</button></details>'}).join(''):'<p class="sub">No hay respuestas para mostrar.</p>'}
 function vResp(){return '<div class="pn"><h2>Respuestas recibidas</h2><div class="r2"><select id="ft"><option value="">Todos los instrumentos</option>'+Object.entries(TESTS).map(([k,v])=>'<option value="'+k+'"'+(F.t===k?' selected':'')+'>'+esc(v.n)+'</option>').join('')+'</select><input id="fq" placeholder="Buscar por nombre o documento" value="'+esc(F.q)+'"></div><button class="btn s" data-a="ex">Exportar a CSV</button><div id="ls">'+listHTML()+'</div></div>'}
-function vInst(){return Object.entries(TESTS).map(([k,t])=>'<div class="pn"><h2>'+esc(t.n)+'</h2><p style="margin:0 0 6px"><b>'+esc(t.full)+'</b></p><p class="sub">'+t.items.length+' ítems · Periodo: '+INFO[k].per+' · Escala '+t.sc[0][0]+' a '+t.sc[t.sc.length-1][0]+'</p><p style="font-size:13.5px">'+esc(INFO[k].corr)+'</p><p class="sub">'+INFO[k].ref.map(esc).join('<br>')+'</p><details><summary>Ver ítems y escala</summary><p class="sub">'+t.sc.map(x=>x[0]+' = '+esc(x[1])).join(' · ')+'</p><table>'+t.items.map((x,i)=>'<tr><td>'+(i+1)+'. '+esc(x)+'</td></tr>').join('')+'</table></details><button class="btn sm" data-go="enviar" data-t="'+k+'">Enviar este instrumento</button></div>').join('')}
+function vInst(){return Object.entries(TESTS).map(([k,t])=>'<div class="pn"><h2>'+esc(t.n)+'</h2><p style="margin:0 0 6px"><b>'+esc(t.full)+'</b></p><p class="sub">'+t.items.length+' ítems · Periodo: '+INFO[k].per+' · Escala '+t.sc[0][0]+' a '+t.sc[t.sc.length-1][0]+'</p><p style="font-size:13.5px">'+esc(INFO[k].corr)+'</p><p class="sub">'+INFO[k].ref.map(esc).join('<br>')+'</p><details><summary>Ver ítems y escala</summary><p class="sub">'+t.sc.map(x=>x[0]+' = '+esc(x[1])).join(' · ')+'</p><table>'+t.items.map((x,i)=>'<tr><td>'+(i+1)+'. '+esc(x)+'</td></tr>').join('')+'</table></details><button class="btn sm" data-go="enviar" data-t="'+k+'">Enviar este instrumento</button><button class="btn sm s" data-a="pb" data-t="'+k+'">Imprimir en blanco (PDF)</button></div>').join('')}
 async function onClick(e){
  const g=e.target.closest('[data-go]');if(g){V=g.dataset.go;if(g.dataset.t)selT=g.dataset.t;draw();return}
  const sm=e.target.closest('summary');if(sm&&sm.parentNode.dataset.id){seen.add(sm.parentNode.dataset.id);save();tabs();return}
  const b=e.target.closest('button[data-a]');if(!b)return;const a=b.dataset.a,id=b.dataset.id,r=C.it[id];
  if(a==='mk'){b.disabled=true;try{const d=doc(collection(db,'invites'));await setDoc(d,{t:selT,n:PRO,status:'pending',createdAt:serverTimestamp(),exp:Timestamp.fromMillis(Date.now()+30*864e5)});
-   LK.unshift({l:location.origin+location.pathname+'?i='+d.id,t:selT,at:Date.now()});LK=LK.slice(0,8);save();draw()}
+   LK.unshift({id:d.id,l:location.origin+location.pathname+'?i='+d.id,t:selT,at:Date.now()});LK=LK.slice(0,30);save();draw()}
   catch(x){b.disabled=false;$('er').hidden=false;$('er').textContent='No se pudo crear el enlace ('+(x.code||'error')+'). Revisa que las reglas de seguridad estén publicadas.'}}
  if(a==='lk'){try{await navigator.clipboard.writeText(LK[+b.dataset.i].l);b.textContent='¡Copiado!'}catch(x){}}
+ if(a==='pb'){printDoc(b.dataset.t||selT,null);return}
+ if(a==='pf'&&r){printDoc(r.t,r.ans,{name:r.name,tipo:r.tipo,doc:r.doc,at:r.at});return}
+ if(a==='pbr'&&r){printDoc(r.t,null);return}
+ if(a==='sync'){b.disabled=true;try{const q=await getDocs(query(collection(db,'invites'),orderBy('createdAt','desc'),limit(30)));LK=q.docs.map(d=>{const v=d.data();return{id:d.id,l:location.origin+location.pathname+'?i='+d.id,t:v.t,at:v.createdAt?v.createdAt.toMillis():0,st:v.status,exp:v.exp?v.exp.toMillis():0}});save();draw()}catch(x){b.disabled=false;alert('No se pudo actualizar ('+(x.code||'error')+').')}return}
+ if(a==='dl'){const n=+b.dataset.i,x=LK[n];if(x&&confirm('¿Eliminar este enlace? Dejará de funcionar. Las respuestas ya recibidas no se borran.')){try{await deleteDoc(doc(db,'invites',x.id||new URL(x.l).searchParams.get('i')));LK.splice(n,1);save();draw()}catch(x2){alert('No se pudo eliminar ('+(x2.code||'error')+').')}}return}
  if(a==='cp'){const t=TESTS[r.t];try{await navigator.clipboard.writeText('RESPUESTAS '+t.n+'\n'+r.name+' · '+r.tipo+' '+r.doc+'\n'+fdt(r.at)+'\n'+[...r.ans].map((v,i)=>(i+1)+': '+v).join('\n'));b.textContent='¡Copiado!'}catch(x){}}
  if(a==='del'&&confirm('¿Eliminar esta respuesta de forma definitiva?')){const w=writeBatch(db);w.delete(doc(db,'responses',id));w.delete(doc(db,'invites',id));await w.commit();delete C.it[id];save();draw()}
  if(a==='ex'){const ft=F.t||'dass21',t=TESTS[ft],q=s=>'"'+String(s).replace(/"/g,'""')+'"';
