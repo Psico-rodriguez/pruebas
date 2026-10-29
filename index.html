@@ -45,21 +45,17 @@ textarea{width:100%;padding:8px 10px;border:1px solid var(--bd);border-radius:8p
 .cv{display:grid;grid-template-columns:1.2fr 2fr .6fr 1.6fr;gap:6px;margin-bottom:6px}@media(max-width:560px){.cv{grid-template-columns:1fr 1fr;padding-bottom:8px;border-bottom:1px dashed var(--bd)}}
 .hint{font-size:12px;color:var(--mu);margin:0 0 4px}.gh+.op,.gh+.hint{margin-top:4px}
 @media print{.pg2{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;margin:6px 0}.sh{font-size:12.5px;margin:12px 0 2px;break-after:avoid}.sh small{font-size:10px;color:#555}.sl{margin:2px 0 4px 18px;padding:0}.sl li{margin:1px 0}}
+.ch{font-size:13px;letter-spacing:.03em;margin:16px 0 4px;color:var(--ac)}.cs{font-size:13px;margin:10px 0 3px;color:var(--tx)}.cp{font-size:13.5px;margin:0 0 8px}ol.cp{padding-left:20px}.cl{font-size:13.5px;margin:0 0 3px 16px}
+.sg{display:block;width:100%;max-width:520px;height:auto;aspect-ratio:3/1;background:#fff;border:1px dashed var(--ac);border-radius:8px;touch-action:none;cursor:crosshair}.sgi{height:56px;max-width:100%;background:#fff;border:1px solid var(--bd);border-radius:6px}
+@media print{.pp .ch{font-size:12px;color:#000;margin:10px 0 3px;break-after:avoid}.pp .cs{font-size:11.5px;color:#000;margin:6px 0 2px;break-after:avoid}.pp .cp,.pp .cl{font-size:11px;color:#000;margin-bottom:4px}.pp .cl{margin-left:14px}.pp ol.cp{padding-left:18px}.cc{break-inside:avoid}.sgp{display:block;height:58px;max-width:100%}.stp{display:inline-block;margin-top:8px;border:2px double #0d4a9e;color:#0d4a9e;padding:6px 10px;font-size:9.5px;line-height:1.4;border-radius:6px;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 </style></head><body><div class="w" id="app"><div class="pn">Cargando…</div></div><div id="pr"></div>
 <script type="module">
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import {getFirestore,doc,collection,getDoc,setDoc,updateDoc,writeBatch,getDocs,deleteDoc,limit,query,where,orderBy,onSnapshot,Timestamp,serverTimestamp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-
+// 1) Pega aquí la configuración de tu app web de Firebase (ver LEEME.md)
 const FB={apiKey:"AIzaSyADVAj9cN9lP-yzbz8cJgWc1GsXJX5vqMY",authDomain:"pruebas-psicometricas-dc84e.firebaseapp.com",projectId:"pruebas-psicometricas-dc84e",appId:"1:690671217402:web:2708063ed0a220af01b743"};
 const PRO='Oscar Steven Rodriguez Bustos';
-
-// Configuración predeterminada de honorarios
-let feesConfig = {
-  sv: '100.000', sp: '120.000', sd: '150.000', se: '40 USD',
-  pv: '360.000', pp: '432.000', pd: '540.000', pe: '144 USD'
-};
-
 const TESTS={
 dass21:{n:'DASS-21',full:'Escala de Depresión, Ansiedad y Estrés (DASS-21)',
  ins:'Por favor lea las siguientes afirmaciones y elija el número (0, 1, 2 o 3) que indica en qué grado le ha ocurrido a usted esta afirmación durante la semana pasada.',
@@ -68,81 +64,107 @@ dass21:{n:'DASS-21',full:'Escala de Depresión, Ansiedad y Estrés (DASS-21)',
 aaq2:{n:'AAQ-II',full:'Cuestionario de Aceptación y Acción – II (AAQ-II)',
  ins:'Debajo encontrará una lista de afirmaciones. Por favor, puntúe en qué grado cada afirmación ES VERDAD PARA USTED eligiendo un número de la escala.',
  sc:[[1,'Nunca es verdad'],[2,'Muy raramente es verdad'],[3,'Raramente es verdad'],[4,'A veces es verdad'],[5,'Frecuentemente es verdad'],[6,'Casi siempre es verdad'],[7,'Siempre es verdad']],
- items:['Mis experiencias y recuerdos dolorosos hacen que me sea difícil vivir la vida que querría.','Tengo miedo de mis sentimientos.','Me preocupa no ser capaz de controlar mis preocupaciones y sentimientos.','Mis recuerdos dolorosos me impiden llevar una vida plena.','Mis emociones interfieren en cómo me gustaría que fuera mi vida.','Parece que la mayoría de la gente lleva su vida mejor que yo.','Mis preocupaciones interfieren en el camino de lo que quiero conseguir.']},
-socio:{n:'Información sociodemográfica',full:'Información sociodemográfica',socio:true,nq:7,
+ items:['Mis experiencias y recuerdos dolorosos hacen que me sea difícil vivir la vida que querría.','Tengo miedo de mis sentimientos.','Me preocupa no ser capaz de controlar mis preocupaciones y sentimientos.','Mis recuerdos dolorosos me impiden llevar una vida plena.','Mis emociones interfieren en cómo me gustaría que fuera mi vida.','Parece que la mayoría de la gente lleva su vida mejor que yo.','Mis preocupaciones interfieren en el camino de lo que quiero conseguir.']}};
+/* ===== SOGS (South Oaks Gambling Screen, versión Colombia) ===== */
+const YN=[[0,'No'],[1,'Sí']],FR=[[0,'Nunca'],[1,'Menos de 1 vez por semana'],[2,'1 vez por semana o más']],L12='abcdefghijkl';
+TESTS.sogs={n:'SOGS',full:'Cuestionario sobre el juego (SOGS Colombia)',lbl:true,nq:16,
+ ins:'Por favor responda las siguientes preguntas sobre su participación en juegos de azar y apuestas. Elija la opción que mejor describa su situación.',
+ f:[...['Cartas por plata','Caballos/perros/gallos','Deportes/pollas/internet','Dados por plata','Casino (legal o ilegal)','Chance/Baloto/Lotería','Bingo por plata','Bolsa/criptomonedas','Tragamonedas','Bolos/billar/tejo/golf por plata','Raspe y gane','Otros (especifique)'].map((q,i)=>({n:'1'+L12[i],q,o:FR,x:i===11,h:i?undefined:'1. Indique con qué frecuencia participó en los siguientes juegos durante el último año'})),
+ {n:'2',q:'Mayor cantidad de plata apostada en un día',o:[[0,'Nunca he apostado'],[1,'<= $5.000 COP'],[2,'$5.000 - $50.000 COP'],[3,'$50.000 - $500.000 COP'],[4,'$500.000 - $5.000.000 COP'],[5,'$5.000.000 - $50.000.000 COP'],[6,'> $50.000.000 COP']]},
+ ...['Padre','Madre','Hermano(a)','Pareja','Hijo(s)','Abuelo(a)','Otro familiar','Amigo'].map((q,i)=>({n:'3'+L12[i],q,c:1,o:YN,h:i?undefined:'3. Personas en su vida con problemas de juego (marque todas las que correspondan)'})),
+ {n:'4',q:'¿Con qué frecuencia vuelve otro día para intentar recuperar la plata perdida?',o:[[0,'Nunca'],[1,'A veces (<50%)'],[2,'La mayoría de las veces'],[3,'Siempre']]},
+ {n:'5',q:'¿Ha fingido ganar apostando cuando en realidad perdió?',o:[[0,'Nunca'],[1,'A veces (<50%)'],[2,'Casi siempre']]},
+ {n:'6',q:'¿Cree que ha tenido un problema con el juego/apuestas?',o:[[0,'No'],[1,'En el pasado sí, ahora no'],[2,'Sí']]},
+ ...['¿Ha apostado más de lo que tenía pensado?','¿Alguien ha criticado su forma de apostar?','¿Ha sentido culpa o remordimiento por jugar o sus consecuencias?','¿Ha querido dejar de jugar pero no se sentía capaz?','¿Ha escondido recibos de apuestas o plata a su familia?','¿Ha discutido en su casa sobre el manejo de la plata?'].map((q,i)=>({n:String(7+i),q,o:YN,h:i?undefined:'Preguntas de Sí / No'})),
+ {n:'13',q:'Si la respuesta a la pregunta 12 fue Sí: ¿esas discusiones fueron por culpa de las apuestas?',o:YN,dep:29},
+ {n:'14',q:'¿Pidió plata prestada y no pudo devolverla por las apuestas?',o:YN},
+ {n:'15',q:'¿Ha faltado al trabajo/estudio por culpa del juego?',o:YN},
+ ...['Plata de la casa (mercado, arriendo)','Su pareja','Otros familiares','Bancos/cooperativas/fondos','Tarjetas de crédito','Gota a gota / prestamista informal','Vendiendo CDTs, acciones o títulos','Vendiendo sus cosas o de la familia','Cheques sin fondos o falsificando firmas','Fiado con el que le recibe las apuestas'].map((q,i)=>({n:'16'+L12[i],q,o:YN,h:i?undefined:'16. Para jugar o pagar deudas de apuestas, ¿ha sacado plata de…?'}))]};
+/* ===== SOCIODEMOGRÁFICO (formulario de campos abiertos; sus datos se guardan en el campo «d» de la respuesta) ===== */
+TESTS.socio={n:'Sociodemográfico',full:'Datos sociodemográficos',socio:true,nq:7,
  ins:'Este formulario recoge datos básicos e información de interés para el proceso de evaluación, la cual permitirá guiar el proceso de intervención. Por favor lea con atención cada pregunta y responda.',
- f:[{n:'1',q:'Datos generales'},{n:'2',q:'Antecedentes de enfermedades'},{n:'3',q:'Atención previa en Psicología/Psiquiatría y diagnósticos (3.1)'},{n:'4',q:'Medicamentos actuales y fecha de inicio (4.1)'},{n:'5',q:'Antecedentes psiquiátricos familiares'},{n:'6',q:'Consumo de sustancias psicoactivas'},{n:'7',q:'Características sociodemográficas (personas con las que vive)'}]},
-consent:{n:'Consentimiento Informado',full:'Consentimiento Informado - Servicio de Psicología',consent:true,nq:1,
- ins:'Por favor lea atentamente el siguiente documento que tiene como objetivo explicar el uso y confidencialidad de sus datos, así como sus derechos y compromisos con respecto al proceso de atención psicológica. Si tiene cualquier duda, puede indicarla antes de firmar el documento.'},
-sogs: {
-  n: 'SOGS', full: 'Cuestionario de Juego Patológico de South Oaks (SOGS)', lbl: true,
-  ins: 'Por favor, lea cada pregunta cuidadosamente y responda con honestidad sobre su comportamiento relacionado con el juego y las apuestas.',
-  f: [
-    ...['a. Jugar a las cartas por dinero','b. Apostar a caballos, perros u otros animales','c. Apostar en deportes','d. Jugar a los dados por dinero','e. Apostar en casinos (ruleta, blackjack, etc.)','f. Jugar a la lotería o chance','g. Jugar al bingo por dinero','h. Jugar en el mercado de valores o materias primas','i. Jugar en máquinas tragamonedas o póker en video','j. Apostar en juegos de habilidad (billar, bolos, etc.)','k. Comprar billetes de raspa y gana','l. Jugar en internet por dinero'].map((q, i) => ({ q, o: [[0,'Nunca'],[1,'Menos de 1 vez a la semana'],[2,'1 vez a la semana o más']], h: i === 0 ? '1. Indique con qué frecuencia ha participado en las siguientes actividades:' : undefined })),
-    { q: '2. ¿Cuál es la mayor cantidad de dinero que ha apostado en un solo día?', o: [[0,'Nunca he apostado'],[1,'Menos de $10.000'],[2,'Entre $10.001 y $100.000'],[3,'Entre $100.001 y $1.000.000'],[4,'Entre $1.000.001 y $10.000.000'],[5,'Más de $10.000.000'],[6,'No lo recuerdo']] },
-    ...['Padre','Madre','Hermano/a','Cónyuge o pareja','Hijo/a','Otro pariente','Un amigo/a','Alguien más importante en mi vida'].map((q, i) => ({ q, c: true, h: i === 0 ? '3. ¿Cuáles de las siguientes personas en su vida tiene (o ha tenido) un problema con el juego?' : undefined })),
-    { q: '4. Cuando apuesta, ¿con qué frecuencia vuelve otro día para recuperar el dinero que perdió?', o: [[0,'Nunca'],[1,'Algunas veces'],[2,'La mayoría de las veces'],[3,'Siempre']] },
-    { q: '5. ¿Alguna vez ha afirmado estar ganando dinero con las apuestas cuando en realidad estaba perdiendo?', o: [[0,'Nunca'],[1,'Sí, menos de la mitad de las veces'],[2,'Sí, la mayoría de las veces']] },
-    { q: '6. ¿Siente que alguna vez ha tenido un problema con el juego o las apuestas?', o: [[0,'No'],[1,'Sí, en el pasado'],[2,'Sí, actualmente']] },
-    { q: '7. ¿Alguna vez ha apostado más de lo que tenía planeado?', c: true },
-    { q: '8. ¿La gente ha criticado sus apuestas o le han dicho que tiene un problema de juego?', c: true },
-    { q: '9. ¿Alguna vez se ha sentido culpable por la forma en que apuesta o por lo que le ocurre al apostar?', c: true },
-    { q: '10. ¿Alguna vez ha sentido que le gustaría dejar de apostar, pero no creía que fuera capaz de hacerlo?', c: true },
-    { q: '11. ¿Alguna vez ha ocultado signos de apuestas (dinero, billetes) a su familia?', c: true },
-    { q: '12. ¿Alguna vez ha discutido con personas con las que vive sobre cómo maneja el dinero?', c: true },
-    { q: '13. (Si respondió afirmativo a la 12) ¿Las discusiones sobre dinero estaban centradas en sus apuestas?', o: [[0,'No aplica / No hemos discutido'],[1,'Sí'],[2,'No']] },
-    { q: '14. ¿Alguna vez ha pedido dinero prestado y no lo ha devuelto como resultado de sus apuestas?', c: true },
-    { q: '15. ¿Alguna vez ha perdido tiempo de trabajo o de estudio debido a las apuestas?', c: true },
-    ...['a. Dinero de la casa (para gastos diarios)','b. Su cónyuge o pareja','c. Otros familiares','d. Bancos o cooperativas','e. Tarjetas de crédito','f. Prestamistas informales','g. Vendiendo propiedades, acciones u otros bienes','h. Retirando dinero de ahorros o jubilación','i. Pidiendo préstamos sobre seguros de vida','j. Girando cheques sin fondos'].map((q, i) => ({ q, c: true, h: i === 0 ? '16. Si alguna vez pidió dinero prestado para apostar, ¿de dónde lo obtuvo?' : undefined }))
-  ]
-}
-};
-
-const SDL=[['fnac','Fecha de nacimiento'],['edad','Edad'],['ocu','Ocupación'],['tel','Teléfono'],['dir','Dirección de residencia'],['ecn','Contacto de emergencia'],['ect','Teléfono del contacto de emergencia'],['enf','Antecedentes de enfermedades'],['psi','¿Ha acudido antes a Psicología/Psiquiatría?'],['dpsi','Diagnósticos psicológicos/psiquiátricos previos'],['med','¿Toma medicamentos actualmente?'],['dmed','Medicamentos y fecha de inicio'],['fam','Antecedentes psiquiátricos familiares'],['sus','¿Consume sustancias psicoactivas?'],['conv','Personas con las que vive']];
+ f:[{n:'1',q:'Datos generales (nacimiento, ocupación, teléfono, dirección y contacto de emergencia)'},{n:'2',q:'Antecedentes de enfermedades'},{n:'3',q:'Atención previa en Psicología/Psiquiatría y diagnósticos (3.1)'},{n:'4',q:'Medicamentos actuales y fecha de inicio (4.1)'},{n:'5',q:'Antecedentes psiquiátricos familiares'},{n:'6',q:'Consumo de sustancias psicoactivas'},{n:'7',q:'Características sociodemográficas (personas con las que vive)'}]};
+const SDL=[['fnac','Fecha de nacimiento'],['edad','Edad'],['ocu','Ocupación'],['tel','Teléfono'],['dir','Dirección de residencia'],['ecn','Contacto de emergencia'],['ect','Teléfono del contacto de emergencia'],['enf','Antecedentes de enfermedades'],['psi','¿Ha acudido antes a Psicología/Psiquiatría?'],['dpsi','Diagnósticos psicológicos/psiquiátricos previos'],['med','¿Toma medicamentos actualmente?'],['dmed','Medicamentos y fecha de inicio'],['fam','Antecedentes psiquiátricos familiares'],['sus','¿Consume sustancias psicoactivas?'],['conv','Personas con las que vive (parentesco · nombre · edad · ocupación)']];
 const sdv=(d,k)=>{const v=d[k]||'';return k==='psi'||k==='med'||k==='sus'?(v==='1'?'Sí':v==='0'?'No':''):k==='fnac'?v.split('-').reverse().join('/'):k==='conv'?v.split('\n').filter(Boolean).map(r=>r.split('\t').map(c=>c||'—').join(' · ')).join('\n'):v};
-const UN=t=>t.socio?' secciones':t.consent?' firmas':' ítems';
-const FLD=t=>t.f||(t.f=t.items?t.items.map(q=>({q,o:t.sc})):[]);
+const UN=t=>t.socio||t.consent?' secciones':t.lbl?' preguntas':' ítems';
+/* ===== CONSENTIMIENTO INFORMADO (texto fijo en el código; los valores de honorarios vienen del enlace y se guardan con la firma) ===== */
+TESTS.socio.g='doc';
+const TP='320281',TEL='3228529736';
+const mny=n=>'$ '+String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+const cnum=c=>c.fees?7:6;
+const CD=['Mi aceptación del proceso de evaluación e intervención ofrecido que me ha sido explicado y entendido por mí y cuyas condiciones generales me ha aclarado el psicólogo.','Que la información que le brindo al psicólogo es verdadera y corresponde a mi realidad, ya que sobre dicha información se plantean las propuestas de intervención.','Que he leído y comprendido íntegramente este documento y en consecuencia acepto su contenido y las consecuencias que de él se deriven y accedo a lo anteriormente mencionado.'];
+TESTS.consent={n:'Consentimiento',full:'Consentimiento informado – Servicio de Psicología',consent:true,g:'doc',nq:7,
+ ins:'Lea con atención el documento. Usted solo diligenciará la declaración final y firmará; el texto no se puede modificar.',
+ f:[{n:'1',q:'Uso y confidencialidad de los datos'},{n:'2',q:'Modelo de tratamiento'},{n:'3',q:'Uso de instrumentos'},{n:'4',q:'Modalidades de atención (virtual y domiciliaria)'},{n:'5',q:'Revocación del consentimiento'},{n:'6',q:'Honorarios, formas de pago y paquetes (se puede ocultar)'},{n:'7',q:'Declaración de consentimiento y firma'}]};
+function CL(c){const B=[],h=(t,f)=>B.push({k:'h',t,f}),s=(t,f)=>B.push({k:'s',t,f}),p=(t,f)=>B.push({k:'p',t,f}),l=(t,f)=>B.push({k:'l',t,f});
+ p('Por favor lea atentamente el siguiente documento que tiene como objetivo explicar el uso y confidencialidad de sus datos, así como sus derechos y compromisos con respecto al proceso de atención psicológica. Si tiene cualquier duda, puede indicarla antes de firmar el documento.');
+ h('1. USO Y CONFIDENCIALIDAD DE LOS DATOS');
+ p('Toda la información concerniente a su evaluación y tratamiento, incluyendo cualquier grabación de audio, video o reporte escrito, son confidenciales y no serán divulgadas ni entregadas a ninguna otra institución o individuo sin su consentimiento expreso, excepto cuando la orden de entrega provenga de una autoridad judicial competente. Además, de acuerdo con la ley 1090 del 2006, es necesario quebrantar este principio de confidencialidad en caso de presentarse situaciones que pongan en grave peligro su integridad física o mental o de algún otro miembro de la comunidad.');
+ h('2. MODELO DE TRATAMIENTO');
+ p('El tratamiento que se le brinda es llevado a cabo con base en un modelo psicológico empíricamente validado, que en unos casos funciona mejor que en otros. Durante las primeras sesiones, se discutirá sobre los objetivos terapéuticos y la intervención a ejecutar.');
+ h('3. USO DE INSTRUMENTOS');
+ p('El proceso de atención psicológica requiere de su compromiso de asistencia, puntualidad y participación en los diferentes instrumentos que se adopten o sean necesarios, además de su colaboración para diligenciar una serie de posibles documentos, pruebas y entrevistas, con información personal que será utilizada para la evaluación e intervención.');
+ h('4. MODALIDADES DE ATENCIÓN');
+ s('4.1 ATENCIÓN PSICOLÓGICA EN MODALIDAD VIRTUAL');
+ p('Las sesiones realizadas en modalidad virtual se llevarán a cabo mediante la plataforma Google Meet, a través de videollamada.');
+ p('Una vez confirmada la consulta mediante el pago correspondiente, el profesional enviará al usuario el enlace de acceso a la sesión. Para el adecuado desarrollo de la sesión, el usuario deberá procurar conectarse desde un lugar en el que se sienta cómodo, tranquilo y que le permita contar con privacidad y condiciones adecuadas para el desarrollo de la atención psicológica.');
+ p('Se recomienda que el usuario se encuentre en un espacio privado, evitando en lo posible la presencia o intervención de terceros que puedan afectar la privacidad, confidencialidad o desarrollo de la sesión.');
+ p('El usuario deberá procurar contar con un dispositivo adecuado y una conexión a internet que permitan realizar la videollamada de manera adecuada.');
+ s('4.2 ATENCIÓN PSICOLÓGICA EN MODALIDAD DOMICILIARIA');
+ p('El servicio de atención psicológica domiciliaria se encuentra disponible únicamente en Bogotá D.C. y está sujeto a disponibilidad de acuerdo con la dirección indicada por el usuario.');
+ p('La viabilidad de la atención domiciliaria deberá ser confirmada previamente por el profesional antes de realizar la reserva de la sesión. La confirmación estará sujeta a las condiciones de desplazamiento, ubicación y disponibilidad de agenda.');
+ p('El usuario deberá proporcionar previamente la dirección completa donde se realizará la atención y garantizar que el espacio destinado para la sesión permita desarrollar la atención psicológica en condiciones adecuadas de privacidad, tranquilidad y seguridad.');
+ p('La confirmación de la viabilidad del servicio domiciliario no implica la reserva de la sesión. La reserva quedará sujeta a las condiciones de pago y confirmación establecidas en este documento.');
+ h('5. REVOCACIÓN DEL CONSENTIMIENTO');
+ p('Las decisiones sobre la continuidad o suspensión de las actividades programadas para la evaluación e intervención de la problemática abordada, son tomadas por usted.');
+ if(c.fees){
+ h('6. HONORARIOS, FORMAS DE PAGO Y PAQUETES DE SESIONES',1);
+ s('6.1. HONORARIOS Y CONDICIONES DE PAGO',1);
+ p('El valor de cada sesión de atención psicológica será establecido de acuerdo con la modalidad seleccionada por el usuario:',1);
+ l('Sesión virtual: '+mny(c.v),1);l('Sesión presencial: '+mny(c.p),1);l('Sesión domiciliaria: '+mny(c.dm),1);
+ l('Sesión para personas residentes fuera de Colombia : '+c.u+' USD sesión virtual',1);
+ p('Cada sesión tiene una duración de 60 minutos (1 hora), independientemente de la modalidad.',1);
+ p('Para las sesiones individuales, el pago de los honorarios deberá realizarse con una anticipación mínima de veinticuatro (24) horas respecto de la fecha y hora programada para la sesión.',1);
+ p('La sesión se considerará confirmada únicamente una vez recibido el pago correspondiente. Si al cumplirse las 24 horas previas a la sesión el pago no ha sido efectuado, la reserva será cancelada y el espacio quedará nuevamente disponible en la agenda del profesional.',1);
+ p('En caso de que el usuario desee posteriormente agendar una nueva sesión, esta estará sujeta a la disponibilidad de agenda del profesional.',1);
+ p('El pago podrá realizarse mediante los medios de pago previamente informados por el profesional.',1);
+ s('6.2. PAQUETES DE SESIONES',1);
+ p('El usuario podrá optar voluntariamente por adquirir un paquete de cuatro (4) sesiones, el cual contará con un valor preferencial frente al pago individual de las sesiones.',1);
+ p('Los valores de los paquetes serán:',1);
+ l('Paquete de 4 sesiones virtuales: '+mny(c.pv),1);l('Paquete de 4 sesiones presenciales: '+mny(c.pp),1);l('Paquete de 4 sesiones domiciliarias: '+mny(c.pd),1);
+ l('Paquete para personas residentes fuera de Colombia : '+c.pu+' USD sesiones virtuales',1);
+ p('Cada sesión tiene una duración de 60 minutos (1 hora), independientemente de la modalidad.',1);
+ p('Los paquetes son personales e intransferibles y únicamente podrán ser utilizados por el usuario que los haya adquirido. No podrán cederse, venderse, compartirse ni transferirse a otra persona.',1);
+ p('Los paquetes tendrán una vigencia de seis (6) semanas contadas a partir de la fecha de pago. Las cuatro sesiones deberán ser programadas y utilizadas dentro de dicho período.',1);
+ p('La adquisición de un paquete corresponde a una modalidad de pago anticipado con condiciones económicas preferenciales.',1);
+ s('6.3. CANCELACIÓN Y REPROGRAMACIÓN',1);
+ p('El usuario podrá cancelar o reprogramar una sesión sin costo siempre que lo comunique con una anticipación mínima de veinticuatro (24) horas.',1);
+ p('Las cancelaciones realizadas con menos de 24 horas de anticipación o las inasistencias sin previo aviso podrán ser contabilizadas como una sesión utilizada y descontadas del paquete.',1);
+ p('En circunstancias excepcionales, el profesional podrá valorar la situación particular y determinar si procede la reprogramación sin descuento de la sesión.',1);
+ p('Cuando la cancelación sea realizada por el profesional, la sesión no será descontada del paquete y será reprogramada de común acuerdo con el usuario.',1);
+ s('6.4. CAMBIO DE MODALIDAD',1);
+ p('Cuando el usuario tenga un paquete adquirido y solicite cambiar la modalidad de una sesión, el cambio estará sujeto a disponibilidad.',1);
+ p('En caso de que la modalidad seleccionada tenga un valor superior al de la modalidad originalmente contratada, el usuario deberá asumir la diferencia correspondiente.',1);
+ p('El usuario declara haber sido informado de los valores, formas de pago, condiciones de los paquetes, vigencia, política de cancelación y demás condiciones económicas del servicio, y manifiesta su aceptación.',1)}
+ return B}
+const chtml=B=>B.map(b=>b.k==='h'?'<h3 class="ch">'+esc(b.t)+'</h3>':b.k==='s'?'<h4 class="cs">'+esc(b.t)+'</h4>':'<p class="'+(b.k==='l'?'cl':'cp')+'">'+esc(b.t)+'</p>').join('');
+const cplain=c=>CL(c).map(b=>b.t).join('\n')+'\n'+CD.join('\n');
+const sha=async s=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(x=>x.toString(16).padStart(2,'0')).join('');
+const sj=o=>JSON.stringify(o||{},Object.keys(o||{}).sort());
+const canon=(r,ps,pm)=>[r.t,r.name,r.tipo,r.doc,sj(r.d),sj(r.c),r.sig,r.th,r.at,ps,pm].join('|');
+const sgOK=s=>/^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(s||'');
+const code=h=>(h||'').slice(0,16).toUpperCase().replace(/(.{4})(?=.)/g,'$1-');
+// Recuadro de firma (mouse, dedo o lápiz). Devuelve un PNG con fondo blanco.
+function pad(cv,cb){const c=cv.getContext('2d');let dr=false,any=false,p;
+ const rs=()=>{c.fillStyle='#fff';c.fillRect(0,0,cv.width,cv.height);c.strokeStyle='#000';c.lineWidth=3;c.lineCap='round';c.lineJoin='round';any=false};
+ const pt=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]};
+ cv.onpointerdown=e=>{e.preventDefault();cv.setPointerCapture(e.pointerId);dr=true;p=pt(e);c.beginPath();c.moveTo(p[0],p[1]);c.lineTo(p[0]+.1,p[1]+.1);c.stroke()};
+ cv.onpointermove=e=>{if(!dr)return;const q=pt(e);c.beginPath();c.moveTo(p[0],p[1]);c.lineTo(q[0],q[1]);c.stroke();p=q;any=true};
+ const up=()=>{if(dr){dr=false;cb&&cb()}};cv.onpointerup=up;cv.onpointercancel=up;rs();
+ return{ctx:c,clear(){rs();cb&&cb()},set(){any=true;cb&&cb()},has:()=>any,png:()=>cv.toDataURL('image/png')}}
+// Cada pregunta ocupa un dígito en la respuesta guardada (43 dígitos para el SOGS; 2 = «no aplica»)
+const FLD=t=>t.f||(t.f=t.items.map(q=>({q,o:t.sc})));
 const LBL=(t,f,c)=>{if(!t.lbl)return c;if(f.c)return c==='1'?'Sí':'No';const o=f.o.find(x=>String(x[0])===String(c));return o?o[1]:(f.dep!==undefined?'No aplica':'')};
-
-const TXT_C1_5 = `
-<h3 class="gh">1. USO Y CONFIDENCIALIDAD DE LOS DATOS</h3>
-<p style="font-size:13px;color:var(--mu);text-align:justify">Toda la información concerniente a su evaluación y tratamiento, incluyendo cualquier grabación de audio, video o reporte escrito, son confidenciales y no serán divulgadas ni entregadas a ninguna otra institución o individuo sin su consentimiento expreso, excepto cuando la orden de entrega provenga de una autoridad judicial competente. Además, de acuerdo con la ley 1090 del 2006, es necesario quebrantar este principio de confidencialidad en caso de presentarse situaciones que pongan en grave peligro su integridad física o mental o de algún otro miembro de la comunidad.</p>
-<h3 class="gh">2. MODELO DE TRATAMIENTO</h3>
-<p style="font-size:13px;color:var(--mu);text-align:justify">El tratamiento que se le brinda es llevado a cabo con base en un modelo psicológico empíricamente validado, que en unos casos funciona mejor que en otros. Durante las primeras sesiones, se discutirá sobre los objetivos terapéuticos y la intervención a ejecutar.</p>
-<h3 class="gh">3. USO DE INSTRUMENTOS</h3>
-<p style="font-size:13px;color:var(--mu);text-align:justify">El proceso de atención psicológica requiere de su compromiso de asistencia, puntualidad y participación en los diferentes instrumentos que se adopten o sean necesarios, además de su colaboración para diligenciar una serie de posibles documentos, pruebas y entrevistas, con información personal que será utilizada para la evaluación e intervención.</p>
-<h3 class="gh">4. MODALIDADES DE ATENCIÓN</h3>
-<p style="font-size:13px;color:var(--mu);text-align:justify"><b>4.1 ATENCIÓN PSICOLÓGICA EN MODALIDAD VIRTUAL</b><br>
-Las sesiones realizadas en modalidad virtual se llevarán a cabo mediante la plataforma Google Meet, a través de videollamada.<br>Una vez confirmada la consulta mediante el pago correspondiente, el profesional enviará al usuario el enlace de acceso a la sesión. Para el adecuado desarrollo de la sesión, el usuario deberá procurar conectarse desde un lugar en el que se sienta cómodo, tranquilo y que le permita contar con privacidad y condiciones adecuadas para el desarrollo de la atención psicológica.<br>Se recomienda que el usuario se encuentre en un espacio privado, evitando en lo posible la presencia o intervención de terceros que puedan afectar la privacidad, confidencialidad o desarrollo de la sesión.<br>El usuario deberá procurar contar con un dispositivo adecuado y una conexión a internet que permitan realizar la videollamada de manera adecuada.<br><br>
-<b>4.2 ATENCIÓN PSICOLÓGICA EN MODALIDAD DOMICILIARIA</b><br>
-El servicio de atención psicológica domiciliaria se encuentra disponible únicamente en Bogotá D.C. y está sujeto a disponibilidad de acuerdo con la dirección indicada por el usuario.<br>La viabilidad de la atención domiciliaria deberá ser confirmada previamente por el profesional antes de realizar la reserva de la sesión. La confirmación estará sujeta a las condiciones de desplazamiento, ubicación y disponibilidad de agenda.<br>El usuario deberá proporcionar previamente la dirección completa donde se realizará la atención y garantizar que el espacio destinado para la sesión permita desarrollar la atención psicológica en condiciones adecuadas de privacidad, tranquilidad y seguridad.<br>La confirmación de la viabilidad del servicio domiciliario no implica la reserva de la sesión. La reserva quedará sujeta a las condiciones de pago y confirmación establecidas en este documento.</p>
-<h3 class="gh">5. REVOCACIÓN DEL CONSENTIMIENTO</h3>
-<p style="font-size:13px;color:var(--mu);text-align:justify">Las decisiones sobre la continuidad o suspensión de las actividades programadas para la evaluación e intervención de la problemática abordada, son tomadas por usted.</p>
-`;
-
-const getTxtC6 = (fc) => `
-<div id="seccion-honorarios">
-<h3 class="gh">6. HONORARIOS, FORMAS DE PAGO Y PAQUETES DE SESIONES</h3>
-<p style="font-size:13px;color:var(--mu);text-align:justify"><b>6.1. HONORARIOS Y CONDICIONES DE PAGO</b><br>
-El valor de cada sesión de atención psicológica será establecido de acuerdo con la modalidad seleccionada por el usuario:<br>
-Sesión virtual: $ ${fc.sv}<br>
-Sesión presencial: $ ${fc.sp}<br>
-Sesión domiciliaria: $ ${fc.sd}<br>
-Sesión para personas residentes fuera de Colombia: ${fc.se} sesión virtual<br><br>
-Cada sesión tiene una duración de 60 minutos (1 hora), independientemente de la modalidad.<br>Para las sesiones individuales, el pago de los honorarios deberá realizarse con una anticipación mínima de veinticuatro (24) horas respecto de la fecha y hora programada para la sesión.<br>La sesión se considerará confirmada únicamente una vez recibido el pago correspondiente. Si al cumplirse las 24 horas previas a la sesión el pago no ha sido efectuado, la reserva será cancelada y el espacio quedará nuevamente disponible en la agenda del profesional.<br>En caso de que el usuario desee posteriormente agendar una nueva sesión, esta estará sujeta a la disponibilidad de agenda del profesional.<br>El pago podrá realizarse mediante los medios de pago previamente informados por el profesional.<br><br>
-<b>6.2. PAQUETES DE SESIONES</b><br>
-El usuario podrá optar voluntariamente por adquirir un paquete de cuatro (4) sesiones, el cual contará con un valor preferencial frente al pago individual de las sesiones.<br>Los valores de los paquetes serán:<br>
-Paquete de 4 sesiones virtuales: $ ${fc.pv}<br>
-Paquete de 4 sesiones presenciales: $ ${fc.pp}<br>
-Paquete de 4 sesiones domiciliarias: $ ${fc.pd}<br>
-Paquete para personas residentes fuera de Colombia: ${fc.pe} sesiones virtuales<br><br>
-Cada sesión tiene una duración de 60 minutos (1 hora), independientemente de la modalidad.<br>Los paquetes son personales e intransferibles y únicamente podrán ser utilizados por el usuario que los haya adquirido. No podrán cederse, venderse, compartirse ni transferirse a otra persona.<br>Los paquetes tendrán una vigencia de seis (6) semanas contadas a partir de la fecha de pago. Las cuatro sesiones deberán ser programadas y utilizadas dentro de dicho período.<br>La adquisición de un paquete corresponde a una modalidad de pago anticipado con condiciones económicas preferenciales.<br><br>
-<b>6.3. CANCELACIÓN Y REPROGRAMACIÓN</b><br>
-El usuario podrá cancelar o reprogramar una sesión sin costo siempre que lo comunique con una anticipación mínima de veinticuatro (24) horas.<br>Las cancelaciones realizadas con menos de 24 horas de anticipación o las inasistencias sin previo aviso podrán ser contabilizadas como una sesión utilizada y descontadas del paquete.<br>En circunstancias excepcionales, el profesional podrá valorar la situación particular y determinar si procede la reprogramación sin descuento de la sesión.<br>Cuando la cancelación sea realizada por el profesional, la sesión no será descontada del paquete y será reprogramada de común acuerdo con el usuario.<br><br>
-<b>6.4. CAMBIO DE MODALIDAD</b><br>
-Cuando el usuario tenga un paquete adquirido y solicite cambiar la modalidad de una sesión, el cambio estará sujeto a disponibilidad.<br>En caso de que la modalidad seleccionada tenga un valor superior al de la modalidad originalmente contratada, el usuario deberá asumir la diferencia correspondiente.<br><br>
-El usuario declara haber sido informado de los valores, formas de pago, condiciones de los paquetes, vigencia, política de cancelación y demás condiciones económicas del servicio, y manifiesta su aceptación.</p>
-</div>`;
 
 const app=initializeApp(FB),auth=getAuth(app),db=getFirestore(app);
 const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -151,13 +173,103 @@ const HD=(t,s)=>'<div class="pn hd"><img src="logo.png" alt="" onerror="this.rem
 const say=(t,m)=>{$('app').innerHTML=HD(t,PRO)+'<div class="pn">'+esc(m)+'</div>'};
 const nl=s=>esc(s).replace(/\n/g,'<br>');
 const PD=t=>'<div class="pn"><h2>Tus datos</h2><label>Nombres y apellidos</label><input id="pn" maxlength="120"><div class="r2"><div><label>Tipo de documento</label><select id="pd"><option>C.C.</option><option>T.I.</option><option>C.E.</option><option>Pasaporte</option><option>PPT</option></select></div><div><label>Número de documento</label><input id="pc" inputmode="numeric" maxlength="30"></div></div></div>'
- +'<div class="pn"><h2>Consentimiento</h2><p style="font-size:13px;margin:0">Autorizo a mi profesional a recibir y tratar '+(t.socio||t.consent?'mis datos personales y sensibles (incluidos los relacionados con mi salud)':'mis respuestas')+' con fines exclusivamente clínicos, de manera confidencial y de acuerdo con la normatividad colombiana sobre protección de datos personales y secreto profesional.</p><label class="ck"><input type="checkbox" id="pk"> He leído y acepto lo anterior.</label></div>';
+ +'<div class="pn"><h2>Consentimiento</h2><p style="font-size:13px;margin:0">Autorizo a mi profesional a recibir y tratar '+(t.socio?'mis datos personales y sensibles (incluidos los relacionados con mi salud)':'mis respuestas')+' con fines exclusivamente clínicos, de manera confidencial y de acuerdo con la normatividad colombiana sobre protección de datos personales y secreto profesional. '+(t.socio?'Entiendo que esta información hace parte de mi historia clínica y es reservada.':'Entiendo que esta prueba es un instrumento de tamizaje y que, por sí sola, no constituye un diagnóstico.')+'</p><label class="ck"><input type="checkbox" id="pk"> He leído y acepto lo anterior.</label></div>';
 
-/* ===== IMPRESIÓN / PDF ===== */
-function printDoc(k,ans,m){
- if(TESTS[k].socio)return printSocio(m);
- if(TESTS[k].consent)return printConsent(m);
- const t=TESTS[k],F=FLD(t),a=ans?[...ans]:null;m=m||{};const d=ms=>new Date(ms).toLocaleDateString('es-CO');
+/* ===== PACIENTE ===== */
+async function patient(){
+ let v;try{const s=await getDoc(doc(db,'invites',ID));if(!s.exists())throw 0;v=s.data()}catch(e){return say('Enlace no válido','Este enlace no es válido o ya venció. Solicita uno nuevo a tu profesional.')}
+ if(v.status!=='pending')return say(gr(v.t)==='doc'?'Documento ya enviado':'Prueba ya enviada',gr(v.t)==='doc'?'Este documento ya fue diligenciado. ¡Gracias!':'Esta prueba ya fue respondida. ¡Gracias!');
+ const t=TESTS[v.t];if(t.consent)return patientConsent(v,t);if(t.socio)return patientSocio(v,t);$('app').innerHTML=HD(t.full,'Solicitado por '+v.n)
+ +PD(t)
+ +'<div class="pn"><h2>Instrucciones</h2><p style="margin:0 0 6px">'+esc(t.ins)+'</p>'+(t.sc?'<div class="lg">'+t.sc.map(x=>'<b>'+x[0]+'</b> = '+esc(x[1])).join('<br>')+'</div>':'')+'<button class="btn s sm" id="pb0" type="button">Imprimir formulario en blanco (PDF)</button>'
+ +FLD(t).map((f,i)=>'<div class="it" id="r'+i+'">'+(f.h?'<h3 class="gh">'+esc(f.h)+'</h3>':'')+'<p>'+(f.n||i+1)+'. '+esc(f.q)+'</p><div class="op">'+(f.c?'<label><input type="checkbox" name="q'+i+'"><span>Sí</span></label>':f.o.map(s=>'<label><input type="radio" name="q'+i+'" value="'+s[0]+'"><span>'+(t.lbl?esc(s[1]):s[0])+'</span></label>').join(''))+'</div>'+(f.x?'<input id="qx" placeholder="Especifique cuál (opcional)" maxlength="100" style="margin-top:6px">':'')+'</div>').join('')+'</div>'
+ +'<div class="pn"><div id="pg" class="sub"></div><div class="pbar"><i id="pb"></i></div><button class="btn" id="fin" disabled>Enviar mis respuestas</button><div id="er" class="note" hidden></div></div>';
+ const F=FLD(t),Q=i=>document.querySelector('input[name=q'+i+']'),ck=i=>(document.querySelector('input[name=q'+i+']:checked')||{}).value;
+ const vis=i=>F[i].dep===undefined||ck(F[i].dep)==='1';
+ const val=i=>F[i].c?(Q(i).checked?'1':'0'):(vis(i)?ck(i):'2');
+ const ans=()=>F.map((_,i)=>val(i)),xv=()=>$('qx')?$('qx').value.trim():'';
+ const upd=()=>{F.forEach((f,i)=>{if(f.dep!==undefined)$('r'+i).hidden=!vis(i)});const req=F.map((_,i)=>i).filter(i=>!F[i].c&&vis(i)),n=req.filter(i=>val(i)!==undefined).length;$('pg').textContent='Respondidas: '+n+' de '+req.length;$('pb').style.width=(100*n/req.length)+'%';$('fin').disabled=!(n===req.length&&$('pn').value.trim()&&$('pc').value.trim()&&$('pk').checked)};
+ $('app').addEventListener('input',upd);$('app').addEventListener('change',upd);upd();$('pb0').onclick=()=>printDoc(v.t,null);
+ $('fin').onclick=async()=>{$('fin').disabled=true;$('fin').textContent='Enviando…';
+  try{const b=writeBatch(db);
+   b.set(doc(db,'responses',ID),{t:v.t,name:$('pn').value.trim(),tipo:$('pd').value,doc:$('pc').value.trim(),ans:ans().join(''),...(xv()?{x:xv()}:{}),consent:true,at:serverTimestamp()});
+   b.update(doc(db,'invites',ID),{status:'done',doneAt:serverTimestamp()});await b.commit();
+   (()=>{const A=ans().join(''),M={name:$('pn').value.trim(),tipo:$('pd').value,doc:$('pc').value.trim(),x:xv(),at:Date.now()};
+    $('app').innerHTML=HD('¡Gracias!',PRO)+'<div class="pn">Tus respuestas fueron enviadas a tu profesional. Si quieres, guarda una copia tuya en PDF.</div><div class="pn"><button class="btn" id="pp">Descargar mis respuestas (PDF)</button></div>';$('pp').onclick=()=>printDoc(v.t,A,M)})()}
+  catch(e){$('er').hidden=false;$('er').textContent='No se pudo enviar (posiblemente ya fue enviada o el enlace venció). Intenta de nuevo o contacta a tu profesional.';$('fin').disabled=false;$('fin').textContent='Enviar mis respuestas'}}
+}
+/* ===== PACIENTE · consentimiento informado ===== */
+function patientConsent(v,t){const c=v.cfg;if(!c)return say('Enlace no válido','Este enlace no está bien configurado. Solicita uno nuevo a tu profesional.');
+ const today=new Date().toLocaleDateString('es-CO');
+ $('app').innerHTML=HD(t.full,'Solicitado por '+v.n)
+ +'<div class="pn"><h2>Documento</h2><p class="hint">Lea con atención. El contenido no se puede modificar: usted solo diligenciará la declaración final y su firma.</p><button class="btn s sm" id="pb0" type="button">Imprimir documento en blanco (PDF)</button>'+chtml(CL(c))+'</div>'
+ +'<div class="pn"><h2>'+cnum(c)+'. Declaración de consentimiento</h2>'
+ +'<label>Nombres y apellidos</label><input id="cn" maxlength="120" autocomplete="name">'
+ +'<div class="r2"><div><label>Tipo de documento</label><select id="ct"><option>C.C.</option><option>T.I.</option><option>C.E.</option><option>Pasaporte</option><option>PPT</option></select></div><div><label>Número de documento</label><input id="cd" inputmode="numeric" maxlength="30"></div></div>'
+ +'<div class="r2"><div><label>Documento expedido en</label><input id="ce" maxlength="60"></div><div><label>Teléfono</label><input id="cp" type="tel" inputmode="tel" maxlength="30"></div></div>'
+ +'<label>Fecha de firma</label><input value="'+esc(today)+'" readonly>'
+ +'<p class="cp" style="margin-top:12px">Yo, <b id="yn">________</b>, identificado(a) con documento de identidad número <b id="yd">________</b> de <b id="ye">________</b>, manifiesto:</p><ol class="cp">'+CD.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>'
+ +'<label class="ck"><input type="checkbox" id="pk"> He leído y comprendido íntegramente este documento y acepto lo anterior.</label></div>'
+ +'<div class="pn"><h2>Firma del usuario</h2><p class="hint">Firme dentro del recuadro con el dedo o el mouse.</p><canvas class="sg" id="spc" width="600" height="200"></canvas><button class="btn s sm" id="spx" type="button">Borrar firma</button>'
+ +'<table class="wide" style="margin-top:8px"><tr><td>Nombres y Apellidos</td><td id="zn"></td></tr><tr><td>C.C.</td><td id="zd"></td></tr><tr><td>Fecha</td><td>'+esc(today)+'</td></tr><tr><td>Teléfono</td><td id="zt"></td></tr></table></div>'
+ +'<div class="pn"><div id="pg" class="sub"></div><button class="btn" id="fin" disabled>Firmar y enviar</button><div id="er" class="note" hidden></div></div>';
+ const g=i=>$(i).value.trim(),SPd=pad($('spc'),()=>upd());
+ const upd=()=>{$('yn').textContent=g('cn')||'________';$('yd').textContent=g('cd')||'________';$('ye').textContent=g('ce')||'________';
+  $('zn').textContent=g('cn');$('zd').textContent=($('ct').value+' '+g('cd')+(g('ce')?' de '+g('ce'):'')).trim();$('zt').textContent=g('cp');
+  const ok=g('cn')&&g('cd')&&g('ce')&&g('cp')&&$('pk').checked&&SPd.has();
+  $('pg').textContent=ok?'Todo listo para firmar y enviar.':'Complete sus datos, acepte y firme para continuar.';$('fin').disabled=!ok};
+ $('app').addEventListener('input',upd);$('app').addEventListener('change',upd);$('spx').onclick=()=>SPd.clear();$('pb0').onclick=()=>printDoc(v.t,null,{c});upd();
+ $('fin').onclick=async()=>{$('fin').disabled=true;$('fin').textContent='Enviando…';
+  try{const N=g('cn'),TP2=$('ct').value,DC=g('cd'),D={exp:g('ce'),tel:g('cp')},sig=SPd.png(),th=await sha(cplain(c)),b=writeBatch(db);
+   b.set(doc(db,'responses',ID),{t:v.t,name:N,tipo:TP2,doc:DC,ans:'',d:D,c,sig,th,consent:true,at:serverTimestamp()});
+   b.update(doc(db,'invites',ID),{status:'done',doneAt:serverTimestamp()});await b.commit();
+   $('app').innerHTML=HD('¡Gracias!',PRO)+'<div class="pn">Tu consentimiento fue firmado y enviado a tu profesional, quien lo firmará y sellará. Si quieres, guarda una copia en PDF.</div><div class="pn"><button class="btn" id="pp">Descargar mi copia (PDF)</button></div>';
+   $('pp').onclick=()=>printDoc(v.t,null,{name:N,tipo:TP2,doc:DC,d:D,c,sig,at:Date.now()})}
+  catch(e){$('er').hidden=false;$('er').textContent='No se pudo enviar (posiblemente ya fue enviado o el enlace venció). Intenta de nuevo o contacta a tu profesional.';$('fin').disabled=false;$('fin').textContent='Firmar y enviar'}}
+}
+/* ===== PACIENTE · formulario sociodemográfico ===== */
+function patientSocio(v,t){
+ const today=new Date().toISOString().slice(0,10);
+ const fl=(k,l,x)=>`<div><label>${l}</label><input id="s_${k}" ${x||'maxlength="100"'}></div>`;
+ const yn=(k,l)=>`<div class="it"><h3 class="gh" style="margin-top:0">${l}</h3><div class="op"><label><input type="radio" name="${k}" value="1"><span>Sí</span></label><label><input type="radio" name="${k}" value="0"><span>No</span></label></div></div>`;
+ const ta=(k,h,ph)=>`<p class="hint">${h}</p><textarea id="s_${k}" rows="4" maxlength="800" placeholder="${ph}"></textarea>`;
+ const cvr=()=>'<div class="cv"><input maxlength="30" placeholder="Parentesco" aria-label="Parentesco"><input maxlength="60" placeholder="Nombre" aria-label="Nombre"><input inputmode="numeric" maxlength="3" placeholder="Edad" aria-label="Edad"><input maxlength="50" placeholder="Ocupación" aria-label="Ocupación"></div>';
+ $('app').innerHTML=HD(t.full,'Solicitado por '+v.n)+PD(t)
+ +`<div class="pn"><h2>Instrucciones</h2><p style="margin:0 0 6px">${esc(t.ins)}</p><button class="btn s sm" id="pb0" type="button">Imprimir formulario en blanco (PDF)</button>
+ <h3 class="gh">1. Datos generales</h3><p class="hint">Su nombre y documento ya los indicó arriba. Complete su información básica y la de su contacto de emergencia.</p>
+ <div class="r2">${fl('fnac','Fecha de nacimiento',`type="date" min="1900-01-01" max="${today}"`)}<div><label>Edad</label><input id="s_edad" readonly placeholder="Se calcula sola"></div>${fl('ocu','Ocupación')}${fl('tel','Número de teléfono','type="tel" inputmode="tel" maxlength="30"')}</div>
+ <label>Dirección de residencia</label><input id="s_dir" maxlength="200">
+ <div class="r2">${fl('ecn','Nombre del contacto de emergencia','maxlength="120"')}${fl('ect','Teléfono del contacto de emergencia','type="tel" inputmode="tel" maxlength="30"')}</div>
+ <h3 class="gh">2. Antecedentes de enfermedades</h3>${ta('enf','Enfermedades diagnosticadas a lo largo de la vida, una por línea, con la fecha del diagnóstico (ej.: Hipertensión – 2019). Si no tiene, déjelo en blanco.','Enfermedad – fecha')}
+ <div class="it" style="border:0">${yn('psi','3. ¿Anteriormente ha acudido a los servicios de Psicología/Psiquiatría?')}<div id="b_psi" hidden><h3 class="gh">3.1 Antecedentes de diagnósticos psicológicos/psiquiátricos</h3>${ta('dpsi','Diagnóstico psiquiátrico o impresión diagnóstica psicológica, uno por línea, con la fecha.','Diagnóstico – fecha')}</div></div>
+ <div class="it" style="border:0">${yn('med','4. ¿Toma algún medicamento actualmente?')}<div id="b_med" hidden><h3 class="gh">4.1 Medicamentos que toma actualmente</h3>${ta('dmed','Uno por línea, junto con la fecha en la que inició su consumo.','Medicamento – fecha de inicio')}</div></div>
+ <h3 class="gh">5. Antecedentes psiquiátricos familiares</h3>${ta('fam','Si existen antecedentes psiquiátricos en su familia, escríbalos uno por línea indicando el parentesco. Si no hay, déjelo en blanco.','Antecedente – parentesco')}
+ <div class="it" style="border:0">${yn('sus','6. ¿Consume alguna sustancia psicoactiva? (ejemplo: marihuana, cocaína, entre otros)')}</div>
+ <h3 class="gh">7. Características sociodemográficas</h3><p class="hint">Enliste las personas con las que vive actualmente y diligencie sus datos.</p>
+ <div id="cvs">${cvr().repeat(4)}</div><button class="btn s sm" id="addc" type="button">+ Agregar persona</button></div>`
+ +'<div class="pn"><div id="pg" class="sub"></div><div class="pbar"><i id="pb"></i></div><button class="btn" id="fin" disabled>Enviar mis respuestas</button><div id="er" class="note" hidden></div></div>';
+ const R=['fnac','ocu','tel','dir','ecn','ect'],g=k=>$('s_'+k).value.trim(),ck=k=>(document.querySelector('input[name='+k+']:checked')||{}).value;
+ const age=s=>{if(!s)return NaN;const b=new Date(s+'T00:00:00'),n=new Date();let a=n.getFullYear()-b.getFullYear();if(n.getMonth()<b.getMonth()||(n.getMonth()===b.getMonth()&&n.getDate()<b.getDate()))a--;return a};
+ const lines=x=>x.split('\n').map(y=>y.trim()).filter(Boolean).join('\n');
+ const conv=()=>[...document.querySelectorAll('#cvs .cv')].map(r=>[...r.querySelectorAll('input')].map(i=>i.value.replace(/\s+/g,' ').trim())).filter(r=>r.some(Boolean)).map(r=>r.join('\t')).join('\n');
+ const dat=()=>{const p=ck('psi'),m=ck('med');return{fnac:g('fnac'),edad:String(age(g('fnac'))),ocu:g('ocu'),tel:g('tel'),dir:g('dir'),ecn:g('ecn'),ect:g('ect'),enf:lines($('s_enf').value),psi:p,dpsi:p==='1'?lines($('s_dpsi').value):'',med:m,dmed:m==='1'?lines($('s_dmed').value):'',fam:lines($('s_fam').value),sus:ck('sus'),conv:conv()}};
+ const upd=()=>{const a=age(g('fnac')),okA=a>=0&&a<=120;$('s_edad').value=okA?a:'';$('b_psi').hidden=ck('psi')!=='1';$('b_med').hidden=ck('med')!=='1';
+  const req=[...R.map(k=>!!g(k)),!!ck('psi'),!!ck('med'),!!ck('sus')],n=req.filter(Boolean).length;
+  $('pg').textContent='Completados: '+n+' de '+req.length;$('pb').style.width=(100*n/req.length)+'%';
+  $('fin').disabled=!(n===req.length&&okA&&$('pn').value.trim()&&$('pc').value.trim()&&$('pk').checked)};
+ $('app').addEventListener('input',upd);$('app').addEventListener('change',upd);upd();$('pb0').onclick=()=>printDoc(v.t,null);
+ $('addc').onclick=()=>{const c=$('cvs');if(c.children.length<8)c.insertAdjacentHTML('beforeend',cvr());if(c.children.length>=8)$('addc').disabled=true};
+ $('fin').onclick=async()=>{$('fin').disabled=true;$('fin').textContent='Enviando…';
+  try{const D=dat(),N=$('pn').value.trim(),TP=$('pd').value,DC=$('pc').value.trim(),b=writeBatch(db);
+   b.set(doc(db,'responses',ID),{t:v.t,name:N,tipo:TP,doc:DC,ans:'',d:D,consent:true,at:serverTimestamp()});
+   b.update(doc(db,'invites',ID),{status:'done',doneAt:serverTimestamp()});await b.commit();
+   $('app').innerHTML=HD('¡Gracias!',PRO)+'<div class="pn">Tus respuestas fueron enviadas a tu profesional. Si quieres, guarda una copia tuya en PDF.</div><div class="pn"><button class="btn" id="pp">Descargar mis respuestas (PDF)</button></div>';
+   $('pp').onclick=()=>printDoc(v.t,null,{name:N,tipo:TP,doc:DC,d:D,at:Date.now()})}
+  catch(e){$('er').hidden=false;$('er').textContent='No se pudo enviar (posiblemente ya fue enviada o el enlace venció). Intenta de nuevo o contacta a tu profesional.';$('fin').disabled=false;$('fin').textContent='Enviar mis respuestas'}}
+}
+
+/* ===== IMPRESIÓN / PDF (en blanco o diligenciado) ===== */
+function printDoc(k,ans,m){if(TESTS[k].consent)return printConsent(m);if(TESTS[k].socio)return printSocio(m);const t=TESTS[k],F=FLD(t),a=ans?[...ans]:null;m=m||{};const d=ms=>new Date(ms).toLocaleDateString('es-CO');
  const f=(l,v)=>'<div class="pf"><span>'+l+'</span><b>'+(v?esc(v):'')+'</b></div>';let tb;
  if(t.lbl){tb='<table class="pt lb"><tbody>'+F.map((q,i)=>{const op=q.c?'<span class="po">'+(a&&a[i]==='1'?'☑':'☐')+' Sí</span>':q.o.map(o=>{const sl=a&&a[i]===String(o[0]);return '<span class="po">'+(sl?'<b>● '+esc(o[1])+'</b>':'○ '+esc(o[1]))+'</span>'}).join('');
    return (q.h?'<tr><td colspan="2"><b>'+esc(q.h)+'</b></td></tr>':'')+'<tr><td style="width:44%">'+(q.n||i+1)+'. '+esc(q.q)+(q.x?(a?(m.x?' — '+esc(m.x):''):' ____________'):'')+'</td><td>'+(a&&q.dep!==undefined&&a[i]==='2'?'No aplica':op)+'</td></tr>'}).join('')+'</tbody></table>'}
@@ -166,11 +278,8 @@ function printDoc(k,ans,m){
  +'<div class="pm">'+f('Nombres y apellidos',m.name)+f('Documento',m.tipo?m.tipo+' '+m.doc:'')+f('Fecha',m.at?d(m.at):'')+'</div>'
  +'<p>'+esc(t.ins)+'</p>'+(t.sc?'<div class="pl">'+t.sc.map(x=>'<b>'+x[0]+'</b> = '+esc(x[1])).join(' · ')+'</div>':'')+tb
  +'<div class="pfoot">'+(a?'Documento diligenciado a partir de las respuestas registradas el '+d(Date.now())+'. ':'Formato en blanco generado el '+d(Date.now())+'. ')+'Instrumento de tamizaje: por sí solo no constituye un diagnóstico.</div></div>';
- addEventListener('afterprint',()=>{$('pr').innerHTML=''},{once:true});setTimeout(()=>print(),60);
-}
-
-function printSocio(m){
- m=m||{};const D=m.d||{},B=!!m.d,dt=ms=>new Date(ms).toLocaleDateString('es-CO');
+ addEventListener('afterprint',()=>{$('pr').innerHTML=''},{once:true});setTimeout(()=>print(),60)}
+function printSocio(m){m=m||{};const D=m.d||{},B=!!m.d,dt=ms=>new Date(ms).toLocaleDateString('es-CO');
  const f=(l,v)=>'<div class="pf"><span>'+l+'</span><b>'+(v?esc(v):'')+'</b></div>';
  const yn=k=>'<span class="po">'+(B&&D[k]==='1'?'☑':'☐')+' Sí</span><span class="po">'+(B&&D[k]==='0'?'☑':'☐')+' No</span>';
  const ls=(k,n)=>{if(!B)return Array(n).fill('<div class="pf"></div>').join('');const a=(D[k]||'').split('\n').filter(Boolean);return a.length?'<ul class="sl">'+a.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'<div class="pf"><b>—</b></div>'};
@@ -190,391 +299,125 @@ function printSocio(m){
  +sh('6. ¿Consume alguna sustancia psicoactiva?','Ejemplo: marihuana, cocaína, entre otros')+'<div style="margin:2px 0">'+yn('sus')+'</div>'
  +sh('7. Características sociodemográficas','Personas con las que vive actualmente')+tb
  +'<div class="pfoot">'+(B?'Documento diligenciado a partir de las respuestas registradas el '+dt(Date.now())+'. ':'Formato en blanco generado el '+dt(Date.now())+'. ')+'Información confidencial sujeta a secreto profesional.</div></div>';
- addEventListener('afterprint',()=>{$('pr').innerHTML=''},{once:true});setTimeout(()=>print(),60);
-}
-
-function printConsent(m){
- m=m||{};const D=m.d||{},B=!!m.d,dt=ms=>new Date(ms).toLocaleDateString('es-CO');
+ addEventListener('afterprint',()=>{$('pr').innerHTML=''},{once:true});setTimeout(()=>print(),60)}
+function printConsent(m){m=m||{};const c=m.c||CFG,D=m.d||{},B=!!m.name,sl=!!m.sealed,dt=ms=>new Date(ms).toLocaleDateString('es-CO'),dtt=ms=>new Date(ms).toLocaleString('es-CO',{dateStyle:'short',timeStyle:'short'});
  const f=(l,v)=>'<div class="pf"><span>'+l+'</span><b>'+(v?esc(v):'')+'</b></div>';
- const fc = D.customFees || feesConfig;
- const showFees = D.showFees !== false; // true if undefined
- 
- let html = '<div class="pp"><div class="ph">'+LOGO+'<div><h1>CONSENTIMIENTO INFORMADO - SERVICIO DE PSICOLOGÍA</h1><div>'+esc(PRO)+' · Psicología</div></div></div>'
- +'<div class="pm">'+f('Nombres y apellidos',m.name)+f('Documento',m.tipo?m.tipo+' '+m.doc:'')+f('Fecha',m.at?dt(m.at):'')+'</div>'
- +'<p style="font-size:11.5px">'+esc(TESTS.consent.ins)+'</p>'
- + TXT_C1_5 + (showFees ? getTxtC6(fc) : '');
-
- html += '<h3 class="gh">7. DECLARACIÓN DE CONSENTIMIENTO</h3>'
- + '<p style="font-size:12.5px;text-align:justify;margin:8px 0">Yo, <b>'+(m.name||'_________________________')+'</b> identificado(a) con documento de identidad número <b>'+(m.tipo?m.tipo+' '+m.doc:'_________________________')+'</b> De <b>'+(D.lugar||'_________________________')+'</b> manifiesto: <br>1) Mi aceptación del proceso de evaluación e intervención ofrecido que me ha sido explicado y entendido por mí y cuyas condiciones generales me ha aclarado el psicólogo.<br>2) Que la información que le brindo al psicólogo es verdadera y corresponde a mi realidad, ya que sobre dicha información se plantean las propuestas de intervención.<br>3) Que he leído y comprendido íntegramente este documento y en consecuencia acepto su contenido y las consecuencias que de él se deriven y accedo a lo anteriormente mencionado.</p>';
-
- // Firmas
- html += '<div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:30px">';
- // Firma paciente
- html += '<div><b>Firma del usuario:</b><br>' + (B && D.sig ? '<img src="'+D.sig+'" style="max-height:80px;margin:10px 0">' : '<div style="height:80px;border-bottom:1px solid #000;margin:10px 0"></div>') 
- + '<br>Nombres y Apellidos: '+(m.name||'')+'<br>C.C.: '+(m.tipo?m.tipo+' '+m.doc:'')+'<br>Teléfono: '+(D.tel||'')+'<br>Fecha: '+(D.date?dt(D.date):'')+'</div>';
- // Firma Psicólogo
- html += '<div><b>Firma del Psicólogo:</b><br>' + (B && D.psig ? '<img src="'+D.psig+'" style="max-height:80px;margin:10px 0">' : '<div style="height:80px;border-bottom:1px solid #000;margin:10px 0"></div>')
- + '<br>Nombres y Apellidos: Oscar Steven Rodriguez Bustos<br>T.P.: 320281<br>Teléfono: 3228529736<br>Fecha: '+(D.pdate?dt(D.pdate):'')+'</div>';
- html += '</div>';
-
- html += '<div class="pfoot" style="margin-top:20px">'+(B?'Documento firmado digitalmente a partir de las declaraciones registradas el '+dt(Date.now())+'. ':'Formato en blanco generado el '+dt(Date.now())+'. ')+'Información confidencial sujeta a secreto profesional.</div></div>';
-
- $('pr').innerHTML = html;
- addEventListener('afterprint',()=>{$('pr').innerHTML=''},{once:true});setTimeout(()=>print(),60);
-}
-
-/* ===== PACIENTE ===== */
-async function patient(){
- let v;try{const s=await getDoc(doc(db,'invites',ID));if(!s.exists())throw 0;v=s.data()}catch(e){return say('Enlace no válido','Este enlace no es válido o ya venció. Solicita uno nuevo a tu profesional.')}
- if(v.status!=='pending')return say('Prueba ya enviada','Esta prueba ya fue respondida. ¡Gracias!');
- const t=TESTS[v.t];
- if(t.socio)return patientSocio(v,t);
- if(t.consent)return patientConsent(v,t);
-
- $('app').innerHTML=HD(t.full,'Solicitado por '+v.n)
- +PD(t)
- +'<div class="pn"><h2>Instrucciones</h2><p style="margin:0 0 6px">'+esc(t.ins)+'</p>'+(t.sc?'<div class="lg">'+t.sc.map(x=>'<b>'+x[0]+'</b> = '+esc(x[1])).join('<br>')+'</div>':'')
- +'<button class="btn s sm" id="pb0" type="button">Imprimir formulario en blanco (PDF)</button>'
- +FLD(t).map((f,i)=>'<div class="it" id="r'+i+'">'+(f.h?'<h3 class="gh">'+esc(f.h)+'</h3>':'')+'<p>'+(f.n||i+1)+'. '+esc(f.q)+'</p><div class="op">'+(f.c?'<label><input type="checkbox" name="q'+i+'"><span>Sí</span></label>':f.o.map(s=>'<label><input type="radio" name="q'+i+'" value="'+s[0]+'"><span>'+(t.lbl?esc(s[1]):s[0])+'</span></label>').join(''))+'</div>'+(f.x?'<input id="qx" placeholder="Especifique cuál (opcional)" maxlength="100" style="margin-top:6px">':'')+'</div>').join('')+'</div>'
- +'<div class="pn"><div id="pg" class="sub"></div><div class="pbar"><i id="pb"></i></div><button class="btn" id="fin" disabled>Enviar mis respuestas</button><div id="er" class="note" hidden></div></div>';
- 
- const F=FLD(t),Q=i=>document.querySelector('input[name=q'+i+']'),ck=i=>(document.querySelector('input[name=q'+i+']:checked')||{}).value;
- const vis=i=>F[i].dep===undefined||ck(F[i].dep)==='1';
- const val=i=>F[i].c?(Q(i).checked?'1':'0'):(vis(i)?ck(i):'2');
- const ans=()=>F.map((_,i)=>val(i)),xv=()=>$('qx')?$('qx').value.trim():'';
- const upd=()=>{F.forEach((f,i)=>{if(f.dep!==undefined)$('r'+i).hidden=!vis(i)});const req=F.map((_,i)=>i).filter(i=>!F[i].c&&vis(i)),n=req.filter(i=>val(i)!==undefined).length;$('pg').textContent='Respondidas: '+n+' de '+req.length;$('pb').style.width=(100*n/req.length)+'%';$('fin').disabled=!(n===req.length&&$('pn').value.trim()&&$('pc').value.trim()&&$('pk').checked)};
- 
- $('app').addEventListener('input',upd);$('app').addEventListener('change',upd);upd();
- $('pb0').onclick=()=>printDoc(v.t,null);
-
- $('fin').onclick=async()=>{$('fin').disabled=true;$('fin').textContent='Enviando…';
-  try{const b=writeBatch(db);
-   b.set(doc(db,'responses',ID),{t:v.t,name:$('pn').value.trim(),tipo:$('pd').value,doc:$('pc').value.trim(),ans:ans().join(''),...(xv()?{x:xv()}:{}),consent:true,at:serverTimestamp()});
-   b.update(doc(db,'invites',ID),{status:'done',doneAt:serverTimestamp()});await b.commit();
-   
-   (()=>{const A=ans().join(''),M={name:$('pn').value.trim(),tipo:$('pd').value,doc:$('pc').value.trim(),x:xv(),at:Date.now()};
-    $('app').innerHTML=HD('¡Gracias!',PRO)+'<div class="pn">Tus respuestas fueron enviadas a tu profesional. Si quieres, guarda una copia tuya en PDF.</div><div class="pn"><button class="btn" id="pp">Descargar mis respuestas (PDF)</button></div>';
-    $('pp').onclick=()=>printDoc(v.t,A,M)})()
-  }
-  catch(e){$('er').hidden=false;$('er').textContent='No se pudo enviar. Intenta de nuevo.';$('fin').disabled=false;$('fin').textContent='Enviar mis respuestas'}
- }
-}
-
-function patientSocio(v,t){
- const today=new Date().toISOString().slice(0,10);
- const fl=(k,l,x)=>`<div><label>${l}</label><input id="s_${k}" ${x||'maxlength="100"'}></div>`;
- const yn=(k,l)=>`<div class="it"><h3 class="gh" style="margin-top:0">${l}</h3><div class="op"><label><input type="radio" name="${k}" value="1"><span>Sí</span></label><label><input type="radio" name="${k}" value="0"><span>No</span></label></div></div>`;
- const ta=(k,h,ph)=>`<p class="hint">${h}</p><textarea id="s_${k}" rows="4" maxlength="800" placeholder="${ph}"></textarea>`;
- const cvr=()=>'<div class="cv"><input maxlength="30" placeholder="Parentesco" aria-label="Parentesco"><input maxlength="60" placeholder="Nombre" aria-label="Nombre"><input inputmode="numeric" maxlength="3" placeholder="Edad" aria-label="Edad"><input maxlength="50" placeholder="Ocupación" aria-label="Ocupación"></div>';
- 
- $('app').innerHTML=HD(t.full,'Solicitado por '+v.n)+PD(t)
- +`<div class="pn"><h2>Instrucciones</h2><p style="margin:0 0 6px">${esc(t.ins)}</p><button class="btn s sm" id="pb0" type="button">Imprimir formulario en blanco (PDF)</button>
- <h3 class="gh">1. Datos generales</h3><p class="hint">Su nombre y documento ya los indicó arriba. Complete su información básica y la de su contacto de emergencia.</p>
- <div class="r2">${fl('fnac','Fecha de nacimiento',`type="date" min="1900-01-01" max="${today}"`)}<div><label>Edad</label><input id="s_edad" readonly placeholder="Se calcula sola"></div>${fl('ocu','Ocupación')}${fl('tel','Número de teléfono','type="tel" inputmode="tel" maxlength="30"')}</div>
- <label>Dirección de residencia</label><input id="s_dir" maxlength="200">
- <div class="r2">${fl('ecn','Nombre del contacto de emergencia','maxlength="120"')}${fl('ect','Teléfono del contacto de emergencia','type="tel" inputmode="tel" maxlength="30"')}</div>
- <h3 class="gh">2. Antecedentes de enfermedades</h3>${ta('enf','Enfermedades diagnosticadas a lo largo de la vida, una por línea, con la fecha del diagnóstico (ej.: Hipertensión – 2019). Si no tiene, déjelo en blanco.','Enfermedad – fecha')}
- <div class="it" style="border:0">${yn('psi','3. ¿Anteriormente ha acudido a los servicios de Psicología/Psiquiatría?')}<div id="b_psi" hidden><h3 class="gh">3.1 Antecedentes de diagnósticos psicológicos/psiquiátricos</h3>${ta('dpsi','Diagnóstico psiquiátrico o impresión diagnóstica psicológica, uno por línea, con la fecha.','Diagnóstico – fecha')}</div></div>
- <div class="it" style="border:0">${yn('med','4. ¿Toma algún medicamento actualmente?')}<div id="b_med" hidden><h3 class="gh">4.1 Medicamentos que toma actualmente</h3>${ta('dmed','Uno por línea, junto con la fecha en la que inició su consumo.','Medicamento – fecha de inicio')}</div></div>
- <h3 class="gh">5. Antecedentes psiquiátricos familiares</h3>${ta('fam','Si existen antecedentes psiquiátricos en su familia, escríbalos uno por línea indicando el parentesco. Si no hay, déjelo en blanco.','Antecedente – parentesco')}
- <div class="it" style="border:0">${yn('sus','6. ¿Consume alguna sustancia psicoactiva? (ejemplo: marihuana, cocaína, entre otros)')}</div>
- <h3 class="gh">7. Características sociodemográficas</h3><p class="hint">Enliste las personas con las que vive actualmente y diligencie sus datos.</p>
- <div id="cvs">${cvr().repeat(4)}</div><button class="btn s sm" id="addc" type="button">+ Agregar persona</button></div>`
- +'<div class="pn"><div id="pg" class="sub"></div><div class="pbar"><i id="pb"></i></div><button class="btn" id="fin" disabled>Enviar mis respuestas</button><div id="er" class="note" hidden></div></div>';
- 
- const R=['fnac','ocu','tel','dir','ecn','ect'],g=k=>$('s_'+k).value.trim(),ck=k=>(document.querySelector('input[name='+k+']:checked')||{}).value;
- const age=s=>{if(!s)return NaN;const b=new Date(s+'T00:00:00'),n=new Date();let a=n.getFullYear()-b.getFullYear();if(n.getMonth()<b.getMonth()||(n.getMonth()===b.getMonth()&&n.getDate()<b.getDate()))a--;return a};
- const lines=x=>x.split('\n').map(y=>y.trim()).filter(Boolean).join('\n');
- const conv=()=>[...document.querySelectorAll('#cvs .cv')].map(r=>[...r.querySelectorAll('input')].map(i=>i.value.replace(/\s+/g,' ').trim())).filter(r=>r.some(Boolean)).map(r=>r.join('\t')).join('\n');
- const dat=()=>{const p=ck('psi'),m=ck('med');return{fnac:g('fnac'),edad:String(age(g('fnac'))),ocu:g('ocu'),tel:g('tel'),dir:g('dir'),ecn:g('ecn'),ect:g('ect'),enf:lines($('s_enf').value),psi:p,dpsi:p==='1'?lines($('s_dpsi').value):'',med:m,dmed:m==='1'?lines($('s_dmed').value):'',fam:lines($('s_fam').value),sus:ck('sus'),conv:conv()}};
- 
- const upd=()=>{const a=age(g('fnac')),okA=a>=0&&a<=120;$('s_edad').value=okA?a:'';$('b_psi').hidden=ck('psi')!=='1';$('b_med').hidden=ck('med')!=='1';
-  const req=[...R.map(k=>!!g(k)),!!ck('psi'),!!ck('med'),!!ck('sus')],n=req.filter(Boolean).length;
-  $('pg').textContent='Completados: '+n+' de '+req.length;$('pb').style.width=(100*n/req.length)+'%';
-  $('fin').disabled=!(n===req.length&&okA&&$('pn').value.trim()&&$('pc').value.trim()&&$('pk').checked)};
-  
- $('app').addEventListener('input',upd);$('app').addEventListener('change',upd);upd();
- $('pb0').onclick=()=>printDoc(v.t,null);
- $('addc').onclick=()=>{const c=$('cvs');if(c.children.length<8)c.insertAdjacentHTML('beforeend',cvr());if(c.children.length>=8)$('addc').disabled=true};
- 
- $('fin').onclick=async()=>{$('fin').disabled=true;$('fin').textContent='Enviando…';
-  try{const D=dat(),N=$('pn').value.trim(),TP=$('pd').value,DC=$('pc').value.trim(),b=writeBatch(db);
-   b.set(doc(db,'responses',ID),{t:v.t,name:N,tipo:TP,doc:DC,ans:'',d:D,consent:true,at:serverTimestamp()});
-   b.update(doc(db,'invites',ID),{status:'done',doneAt:serverTimestamp()});await b.commit();
-   $('app').innerHTML=HD('¡Gracias!',PRO)+'<div class="pn">Tus respuestas fueron enviadas a tu profesional. Si quieres, guarda una copia tuya en PDF.</div><div class="pn"><button class="btn" id="pp">Descargar mis respuestas (PDF)</button></div>';
-   $('pp').onclick=()=>printDoc(v.t,null,{name:N,tipo:TP,doc:DC,d:D,at:Date.now()})}
-  catch(e){$('er').hidden=false;$('er').textContent='No se pudo enviar. Intenta de nuevo.';$('fin').disabled=false;$('fin').textContent='Enviar mis respuestas'}
- }
-}
-
-function patientConsent(v,t){
- const fc = v.customFees || feesConfig;
- const form7 = `
- <h3 class="gh">7. DECLARACIÓN DE CONSENTIMIENTO</h3>
- <p style="font-size:13px;color:var(--mu);margin-bottom:8px">Yo, <b id="lblN"></b> identificado(a) con documento de identidad número <b id="lblD"></b> De <input id="dLugar" placeholder="Ciudad" style="width:120px;padding:2px 6px;margin:0 4px;font-size:13px"> manifiesto:</p>
- <ol style="font-size:13px;color:var(--mu);padding-left:20px;margin-bottom:16px">
-  <li style="margin-bottom:6px">Mi aceptación del proceso de evaluación e intervención ofrecido que me ha sido explicado y entendido por mí y cuyas condiciones generales me ha aclarado el psicólogo.</li>
-  <li style="margin-bottom:6px">Que la información que le brindo al psicólogo es verdadera y corresponde a mi realidad, ya que sobre dicha información se plantean las propuestas de intervención.</li>
-  <li>Que he leído y comprendido íntegramente este documento y en consecuencia acepto su contenido y las consecuencias que de él se deriven y accedo a lo anteriormente mencionado.</li>
- </ol>
- <div style="border:1px solid var(--bd);border-radius:8px;padding:8px;background:var(--bg)">
-   <span class="sub">Firma del usuario (dibuje su firma aquí con el mouse o dedo):</span>
-   <canvas id="sigC" width="400" height="150" style="width:100%;height:150px;background:#fff;border-bottom:1px dashed var(--bd);touch-action:none;cursor:crosshair;border-radius:4px"></canvas>
-   <div style="text-align:right;padding-top:6px;margin-bottom:10px"><button class="btn s sm" id="clrS" type="button" style="margin:0">Limpiar firma</button></div>
-   <div class="row" style="padding:4px 0"><span>Nombres y Apellidos:</span> <b id="fN"></b></div>
-   <div class="row" style="padding:4px 0"><span>C.C.:</span> <b id="fD"></b></div>
-   <div class="row" style="padding:4px 0"><span>Teléfono:</span> <b id="fT"></b></div>
-   <div class="row" style="padding:4px 0"><span>Fecha:</span> <b id="fF"></b></div>
- </div>
- <div style="border:1px solid var(--bd);border-radius:8px;padding:8px;background:var(--bg);margin-top:12px;opacity:0.6">
-   <span class="sub">Firma del Psicólogo (El profesional firmará este espacio tras la recepción):</span>
-   <div class="row" style="padding:4px 0;margin-top:20px"><span>Nombres y Apellidos:</span> <b>Oscar Steven Rodriguez Bustos</b></div>
-   <div class="row" style="padding:4px 0"><span>T.P.:</span> <b>320281</b></div>
-   <div class="row" style="padding:4px 0"><span>Teléfono:</span> <b>3228529736</b></div>
- </div>
- `;
-
- $('app').innerHTML=HD(t.full,'Solicitado por '+v.n)+PD(t)
- + '<div class="pn"><h2>Datos de Contacto</h2><label>Número de teléfono celular</label><input id="ptel" type="tel" maxlength="30"></div>'
- + '<div class="pn"><h2>Instrucciones</h2><p style="margin:0 0 6px">'+esc(t.ins)+'</p><button class="btn s sm" id="pb0" type="button">Imprimir formulario en blanco (PDF)</button></div>'
- + '<div class="pn" style="background:#fff"><h2>Documento</h2>' + TXT_C1_5 + (v.showFees!==false?getTxtC6(fc):'') + form7 + '</div>'
- + '<div class="pn"><button class="btn" id="fin" disabled>Firmar y Enviar Documento</button><div id="er" class="note" hidden></div></div>';
-
- $('pb0').onclick=()=>printDoc(v.t,null,{d:{customFees:fc, showFees:v.showFees!==false}});
-
- const updL = () => {
-   $('lblN').textContent = $('pn').value.trim() || '___________________';
-   $('lblD').textContent = ($('pd').value + ' ' + $('pc').value.trim()) || '___________________';
-   $('fN').textContent = $('pn').value.trim();
-   $('fD').textContent = $('pd').value + ' ' + $('pc').value.trim();
-   $('fT').textContent = $('ptel').value.trim();
-   $('fF').textContent = new Date().toLocaleDateString('es-CO');
-   const ok = $('pn').value.trim() && $('pc').value.trim() && $('ptel').value.trim() && $('dLugar').value.trim() && $('pk').checked && !bV;
-   $('fin').disabled = !ok;
- };
- $('app').addEventListener('input', updL);
- $('app').addEventListener('change', updL);
- 
- const cv = $('sigC'), cx = cv.getContext('2d');
- let drw = false, bV = true;
- cx.lineWidth = 2; cx.lineCap = 'round'; cx.strokeStyle = '#000';
- const p = e => { const r = cv.getBoundingClientRect(); return { x: (e.touches?e.touches[0].clientX:e.clientX)-r.left, y: (e.touches?e.touches[0].clientY:e.clientY)-r.top }; };
- const st = e => { e.preventDefault(); drw = true; bV = false; const c = p(e); cx.beginPath(); cx.moveTo(c.x, c.y); };
- const mv = e => { e.preventDefault(); if(!drw)return; const c = p(e); cx.lineTo(c.x, c.y); cx.stroke(); updL(); };
- const nd = e => { drw = false; updL(); };
- cv.addEventListener('mousedown', st); cv.addEventListener('mousemove', mv); cv.addEventListener('mouseup', nd); cv.addEventListener('mouseout', nd);
- cv.addEventListener('touchstart', st, {passive:false}); cv.addEventListener('touchmove', mv, {passive:false}); cv.addEventListener('touchend', nd);
- $('clrS').onclick = () => { cx.clearRect(0,0,cv.width,cv.height); bV=true; updL(); };
-
- $('fin').onclick = async() => {
-   $('fin').disabled=true; $('fin').textContent='Enviando y bloqueando...';
-   try {
-     const D = { tel: $('ptel').value.trim(), lugar: $('dLugar').value.trim(), showFees: v.showFees!==false, customFees: fc, sig: cv.toDataURL(), date: Date.now() };
-     const N=$('pn').value.trim(), TP=$('pd').value, DC=$('pc').value.trim();
-     const b = writeBatch(db);
-     b.set(doc(db,'responses',ID), {t:v.t, name:N, tipo:TP, doc:DC, ans:'', d:D, consent:true, at:serverTimestamp()});
-     b.update(doc(db,'invites',ID), {status:'done', doneAt:serverTimestamp()});
-     await b.commit();
-     
-     $('app').innerHTML = HD('¡Gracias!', PRO)+'<div class="pn">Tu documento fue firmado exitosamente y enviado a tu profesional. Si quieres, guarda una copia tuya en PDF.</div><div class="pn"><button class="btn" id="pp">Descargar documento diligenciado (PDF)</button></div>';
-     $('pp').onclick=()=>printDoc(v.t,null,{name:N,tipo:TP,doc:DC,d:D,at:Date.now()});
-   } catch(e) {
-     $('er').hidden=false; $('er').textContent='No se pudo enviar. Intenta de nuevo.';
-     $('fin').disabled=false; $('fin').textContent='Firmar y Enviar Documento';
-   }
- };
- updL();
-}
-
-
+ const im=s=>sgOK(s)?'<img class="sgp" src="'+s+'" alt="Firma">':'<div class="pf" style="min-height:58px"></div>';
+ const ul=v=>v?'<u>&nbsp;'+esc(v)+'&nbsp;</u>':'________________';
+ const stamp=sl?'<div class="stp"><b>'+esc(PRO.toUpperCase())+'</b><br>PSICÓLOGO · T.P. '+TP+'<br>Sellado digitalmente el '+dtt(m.pm)+'<br>Código: '+code(m.sh)+'</div>':'';
+ $('pr').innerHTML='<div class="pp"><div class="ph">'+LOGO+'<div><h1>FORMATO CONSENTIMIENTO INFORMADO - SERVICIO DE PSICOLOGÍA</h1><div>'+esc(PRO)+' · Psicología</div></div></div>'
+ +chtml(CL(c))
+ +'<div class="cc"><h3 class="ch">'+cnum(c)+'. DECLARACIÓN DE CONSENTIMIENTO</h3><p class="cp">Yo, '+ul(m.name)+', identificado(a) con documento de identidad número '+ul(m.doc)+' de '+ul(D.exp)+', manifiesto:</p><ol class="cp">'+CD.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>'
+ +'<div class="pg2"><div><div class="sh"><b>Firma del usuario</b></div>'+im(m.sig)+f('Nombres y Apellidos',m.name)+f('C.C.',B?m.tipo+' '+m.doc+(D.exp?' de '+D.exp:''):'')+f('Fecha',m.at?dt(m.at):'')+f('Teléfono',D.tel)+'</div>'
+ +'<div><div class="sh"><b>Firma del Psicólogo</b></div>'+(sl?im(m.ps):'<div class="pf" style="min-height:58px"></div>')+f('Nombres y Apellidos',PRO)+f('T.P.',TP)+f('Fecha',sl?dt(m.pm):'')+f('Teléfono',TEL)+stamp+'</div></div></div>'
+ +'<div class="pfoot">'+(sl?'Firmado por el usuario el '+dtt(m.at)+' y sellado por el psicólogo el '+dtt(m.pm)+'. Documento bloqueado. Código de verificación (SHA-256): '+code(m.sh)+'.':B?'Firmado por el usuario el '+dtt(m.at)+'. Pendiente de la firma y el sello del psicólogo.':'Formato en blanco generado el '+dt(Date.now())+'.')+' Información confidencial sujeta a secreto profesional.</div></div>';
+ addEventListener('afterprint',()=>{$('pr').innerHTML=''},{once:true});setTimeout(()=>print(),60)}
 /* ===== PROFESIONAL ===== */
-const DOM='@consultorio.app'; 
-const INFO={dass21:{per:'Última semana',ref:['Original: Antony et al. (1998).'],corr:'Tres subescalas.'},
- aaq2:{per:'Actualidad',ref:['Original: Bond et al. (2011).'],corr:'Suma de los 7 ítems.'},
- socio:{per:'Al momento de responder',ref:['Formato propio del consultorio.'],corr:'Formulario sociodemográfico de datos básicos y antecedentes.'},
- consent:{per:'Al momento de responder',ref:['Documento legal propio del consultorio.'],corr:'Consentimiento informado digital.'},
- sogs:{per:'A lo largo de la vida / Actualidad',ref:['Lesieur & Blume (1987). South Oaks Gambling Screen.'],corr:'Un puntaje > 5 sugiere ludopatía.'}
-};
-
+const DOM='@consultorio.app'; // el "correo" interno es solo el usuario + este sufijo; nunca se envían correos
+const INFO={dass21:{per:'Última semana',ref:['Original: Antony et al. (1998), Psychological Assessment, 10, 176-181.','Colombia: Ruiz et al. (2017), Int. J. Psychol. Psychol. Ther., 17, 97-105.'],corr:'Tres subescalas: Depresión (ítems 3, 5, 10, 13, 16, 17, 21), Ansiedad (2, 4, 7, 9, 15, 19, 20) y Estrés (1, 6, 8, 11, 12, 14, 18). El total es la suma de todos los ítems.'},
+ aaq2:{per:'Actualidad',ref:['Original: Bond et al. (2011), Behavior Therapy, 42, 676-688.','España: Ruiz et al. (2013), Psicothema, 25, 123-129.','Colombia: Ruiz et al. (2016), The Psychological Record, 66, 429-437.'],corr:'Suma de los 7 ítems (rango 7 a 49). A mayor puntuación, mayor evitación experiencial; los promedios sin problema clínico rondan 18 a 23 y los clínicos superan 29.'}};
+INFO.socio={per:'Al momento de responder',ref:['Formato propio del consultorio (Datos sociodemográficos).'],corr:'Formulario de datos básicos y antecedentes. No tiene calificación: las respuestas se muestran tal como las diligenció el paciente.'};
+INFO.consent={per:'Antes de iniciar la atención',ref:['Formato propio del consultorio (Consentimiento informado – Servicio de Psicología).'],corr:'Documento de lectura y firma: el paciente no puede modificar el texto; solo diligencia la declaración final y firma. Después usted lo firma y lo sella, y queda bloqueado.'};
+INFO.sogs={per:'Frecuencia: último año; resto: a lo largo de la vida',ref:['Original: Lesieur y Blume (1987), American Journal of Psychiatry, 144, 1184-1188.','Versión Colombia: texto cargado por el profesional (el archivo no incluye referencia).'],corr:'Cuestionario de tamizaje de juego patológico (ludopatía). Esta app solo recoge y muestra las respuestas; la calificación no está incluida porque el archivo cargado no trae el manual de corrección.'};
 const LS=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
-let V='inicio',selT='dass21',docSelT='consent',unsub=null,C={last:0,it:{}},seen=new Set(),LK=[],F={t:'',q:''};
-const save=()=>{try{localStorage.setItem('cr',JSON.stringify(C));localStorage.setItem('seen',JSON.stringify([...seen]));localStorage.setItem('lk',JSON.stringify(LK))}catch(e){}};
+let V='inicio',selT='dass21',unsub=null,C={last:0,it:{}},seen=new Set(),LK=[],F={t:'',q:''},SIGN=null,SP=null,CFG=Object.assign({fees:true,v:100000,p:120000,dm:150000,u:40,pv:360000,pp:432000,pd:540000,pu:144},LS('cfgc',{}));
+const save=()=>{try{localStorage.setItem('cr',JSON.stringify(C));localStorage.setItem('cfgc',JSON.stringify(CFG));localStorage.setItem('seen',JSON.stringify([...seen]));localStorage.setItem('lk',JSON.stringify(LK))}catch(e){}};
 const fdt=ms=>new Date(ms).toLocaleString('es-CO',{dateStyle:'medium',timeStyle:'short'});
-const unseen=()=>Object.keys(C.it).filter(i=>!seen.has(i)).length;
+const gr=t=>(TESTS[t]||{}).g||'test',byG=g=>Object.entries(TESTS).filter(([,t])=>(t.g||'test')===g),unseen=g=>Object.keys(C.it).filter(i=>!seen.has(i)&&(!g||gr(C.it[i].t)===g)).length;
 const LOGO='<img src="logo.png" alt="" onerror="this.remove()">';
-
 function login(){$('app').innerHTML='<div class="lg2"><div class="pn">'+LOGO+'<h1>Pruebas psicométricas</h1><p class="sub">Ingresa con tu usuario (o correo) y contraseña</p><label>Usuario o correo</label><input id="us" autocomplete="username" autocapitalize="none" spellcheck="false"><label>Contraseña</label><input id="pw" type="password" autocomplete="current-password"><label class="ck"><input type="checkbox" id="sp"> Mostrar contraseña</label><button class="btn" id="go">Entrar</button><div id="er" class="note" hidden></div></div></div>';
  $('sp').onchange=()=>$('pw').type=$('sp').checked?'text':'password';
- const go=async()=>{$('go').disabled=true;$('er').hidden=true;try{await signInWithEmailAndPassword(auth,(v=>v.includes('@')?v:v+DOM)($('us').value.trim().toLowerCase()),$('pw').value)}catch(e){$('er').hidden=false;$('er').textContent='Error al entrar.';$('go').disabled=false}};
+ const go=async()=>{$('go').disabled=true;$('er').hidden=true;try{await signInWithEmailAndPassword(auth,(v=>v.includes('@')?v:v+DOM)($('us').value.trim().toLowerCase()),$('pw').value)}catch(e){$('er').hidden=false;$('er').textContent=['auth/too-many-requests'].includes(e.code)?'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.':['auth/invalid-credential','auth/invalid-email','auth/user-not-found','auth/wrong-password','auth/missing-password'].includes(e.code)?'Usuario o contraseña incorrectos (revisa que el usuario exista en Firebase → Authentication → Usuarios).':'No se pudo entrar ('+e.code+').';$('go').disabled=false}};
  $('go').onclick=go;$('pw').onkeydown=e=>{if(e.key==='Enter')go()}}
-
 function shell(){C=LS('cr',C);seen=new Set(LS('seen',[]));LK=LS('lk',[]);
  $('app').innerHTML='<div class="top"><div class="hd">'+LOGO+'<b>Pruebas psicométricas</b></div><button class="btn sm s" id="out" style="margin:0">Salir</button></div><nav class="tabs" id="tb"></nav><div id="view"></div>';
  $('out').onclick=()=>{unsub&&unsub();unsub=null;localStorage.removeItem('cr');localStorage.removeItem('seen');C={last:0,it:{}};signOut(auth)};
- $('tb').onclick=e=>{const b=e.target.closest('button');if(b){V=b.dataset.v;draw()}};
+ $('tb').onclick=e=>{const b=e.target.closest('button');if(b){V=b.dataset.v;SIGN=null;SP=null;draw()}};
  $('view').onclick=onClick;
- $('view').oninput=e=>{if(e.target.id==='fq'){F.q=e.target.value;$('ls').innerHTML=listHTML()}};
- $('view').onchange=e=>{
-   if(e.target.name==='st'){selT=e.target.value;}
-   if(e.target.name==='docSt'){docSelT=e.target.value; draw();}
-   if(e.target.id==='ft'){F.t=e.target.value;$('ls').innerHTML=listHTML()}
- };
+ $('view').oninput=e=>{if(e.target.id==='fq'){F.q=e.target.value;refresh()}
+  if(/^cf_/.test(e.target.id)&&e.target.id!=='cf_fees'){CFG[e.target.id.slice(3)]=parseInt(e.target.value.replace(/\D/g,''),10)||0;save();if($('cfp'))$('cfp').innerHTML=cfgPrev()}};
+ $('view').onchange=e=>{if(e.target.name==='st'){const o=selT;selT=e.target.value;if(o==='consent'||selT==='consent')draw()}if(e.target.id==='ft'){F.t=e.target.value;refresh()}if(e.target.id==='cf_fees'){CFG.fees=e.target.checked;save();draw()}if(e.target.id==='spk')spu()};
+ // Solo se leen respuestas nuevas: la consulta parte de la última guardada en este dispositivo
  unsub=onSnapshot(query(collection(db,'responses'),where('at','>=',Timestamp.fromMillis(C.last)),orderBy('at')),s=>{
-  s.docChanges().forEach(c=>{if(c.type==='removed'){delete C.it[c.doc.id];return}const d=c.doc.data();if(!d.at)return;const m=d.at.toMillis();C.it[c.doc.id]={t:d.t,name:d.name,tipo:d.tipo,doc:d.doc,ans:d.ans,x:d.x||'',d:d.d||null,at:m};C.last=Math.max(C.last,m)});save();if(V!=='enviar'&&V!=='docs'&&V!=='inst')draw();else tabs()},
-  e=>{V='inicio';draw('<div class="note">No tienes permiso. Revisa firestore.rules.</div>')});
+  s.docChanges().forEach(c=>{if(c.type==='removed'){delete C.it[c.doc.id];return}const d=c.doc.data();if(!d.at)return;const m=d.at.toMillis();C.it[c.doc.id]={t:d.t,name:d.name,tipo:d.tipo,doc:d.doc,ans:d.ans,x:d.x||'',d:d.d||null,c:d.c||null,sig:d.sig||'',th:d.th||'',sealed:!!d.sealed,ps:d.ps||'',pm:d.pm||0,sh:d.sh||'',at:m};C.last=Math.max(C.last,m)});save();if(V!=='enviar'&&V!=='inst'&&!SIGN)draw();else tabs()},
+  e=>{V='inicio';draw('<div class="note">No tienes permiso para leer las respuestas. Revisa que las reglas de seguridad (firestore.rules) estén publicadas con tu usuario.</div>')});
  draw()}
-
-function tabs(){
- const n=unseen();document.title=(n?'('+n+') ':'')+'Pruebas psicométricas';
- $('tb').innerHTML=[['inicio','Inicio'],['enviar','Enviar prueba'],['docs','Otros documentos'],['resp','Respuestas'],['inst','Instrumentos']].map(([k,l])=>'<button data-v="'+k+'" class="'+(V===k?'on':'')+'">'+l+(k==='resp'&&n?'<span class="bg">'+n+'</span>':'')+'</button>').join('')
-}
-
-function draw(extra){tabs();const v=$('view');v.innerHTML=(extra||'')+({inicio:vInicio,enviar:vEnviar,docs:vOtrosDocs,resp:vResp,inst:vInst}[V])()}
+function tabs(){const n=unseen(),bd={resp:unseen('test'),docs:unseen('doc')};document.title=(n?'('+n+') ':'')+'Pruebas psicométricas';$('tb').innerHTML=[['inicio','Inicio'],['enviar','Enviar'],['resp','Respuestas'],['docs','Documentos'],['inst','Instrumentos']].map(([k,l])=>'<button data-v="'+k+'" class="'+(V===k?'on':'')+'">'+l+(bd[k]?'<span class="bg">'+bd[k]+'</span>':'')+'</button>').join('')}
+function draw(extra){tabs();const v=$('view');v.innerHTML=(extra||'')+({inicio:vInicio,enviar:vEnviar,resp:vResp,docs:vDocs,inst:vInst}[V])()}
 const go=(b,t)=>'<button class="btn big" data-go="'+b+'"'+(t?' data-t="'+t+'"':'')+'>';
-
-function vInicio(){const a=Object.values(C.it),n=a.length,nw=unseen(),l=a.reduce((m,r)=>Math.max(m,r.at),0);
+function vInicio(){const a=Object.values(C.it),n=a.length,nw=unseen(),l=a.reduce((m,r)=>Math.max(m,r.at),0),ps=a.filter(r=>r.t==='consent'&&!r.sealed).length;
+ const grp=(g,h)=>'<div class="pn" style="margin-top:14px"><h2>'+h+'</h2>'+byG(g).map(([k,t])=>'<div class="row"><span>'+esc(t.full)+'</span><b>'+a.filter(r=>r.t===k).length+'</b></div>').join('')+(g==='doc'?'<div class="row"><span>Consentimientos por firmar y sellar</span><b>'+ps+'</b></div>':'')+'</div>';
  return '<div class="st"><div class="pn"><b>'+n+'</b><span class="sub">Respuestas recibidas</span></div><div class="pn"><b>'+nw+'</b><span class="sub">Sin revisar</span></div><div class="pn"><b style="font-size:15px;padding:8px 0">'+(l?fdt(l):'—')+'</b><span class="sub">Última respuesta</span></div></div>'
- +'<div class="pn" style="margin-top:14px"><h2>Por documento o prueba</h2>'+Object.entries(TESTS).map(([k,t])=>'<div class="row"><span>'+esc(t.n)+'</span><b>'+a.filter(r=>r.t===k).length+'</b></div>').join('')+'</div>'
- +'<div class="r2">'+go('enviar')+'Enviar una prueba</button>'+go('docs').replace('btn big','btn big s')+'Otros documentos</button></div>'}
-
-function vEnviar(){
- const testKeys = ['dass21', 'aaq2', 'sogs'];
- return '<div class="pn"><h2>Elige la prueba psicométrica</h2>'+testKeys.map(k=>{const t=TESTS[k]; return '<label class="rc"><input type="radio" name="st" value="'+k+'"'+(selT===k?' checked':'')+'><b>'+esc(t.n)+'</b> — '+esc(t.full)+'<br><span class="sub">'+(t.nq||FLD(t).length)+UN(t)+' · '+INFO[k].per+'</span></label>'}).join('')
- +'<button class="btn big" id="mk" data-a="mk">Generar enlace único</button><button class="btn s" data-a="pb">Imprimir formulario en blanco (PDF)</button><p class="sub">Cada enlace sirve para una sola persona y vence en 30 días.</p><div id="er" class="note" hidden></div></div>'
- + renderLinks();
-}
-
-function vOtrosDocs(){
- const isConsent = docSelT === 'consent';
- const feesForm = isConsent ? `
-  <div class="pn" style="border-left:3px solid var(--ac)">
-    <label class="ck"><input type="checkbox" id="showFees" checked> <b>Mostrar Sección 6 (Honorarios, pagos y paquetes)</b></label>
-    <p class="sub">Desmarca esta opción si el paciente ya pagó por otro medio y no deseas incluir tarifas en su documento.</p>
-    <div id="feesInputs" style="margin-top:10px">
-      <h2>Modificar honorarios y paquetes (Fase 1)</h2>
-      <div class="r2">
-        <div><label>Sesión virtual ($)</label><input id="f_sv" value="${feesConfig.sv}"></div>
-        <div><label>Sesión presencial ($)</label><input id="f_sp" value="${feesConfig.sp}"></div>
-        <div><label>Sesión domiciliaria ($)</label><input id="f_sd" value="${feesConfig.sd}"></div>
-        <div><label>Sesión exterior (USD)</label><input id="f_se" value="${feesConfig.se}"></div>
-      </div>
-      <div class="r2" style="margin-top:6px">
-        <div><label>Paquete 4 virt. ($)</label><input id="f_pv" value="${feesConfig.pv}"></div>
-        <div><label>Paquete 4 pres. ($)</label><input id="f_pp" value="${feesConfig.pp}"></div>
-        <div><label>Paquete 4 dom. ($)</label><input id="f_pd" value="${feesConfig.pd}"></div>
-        <div><label>Paquete 4 ext. (USD)</label><input id="f_pe" value="${feesConfig.pe}"></div>
-      </div>
-    </div>
-  </div>
- ` : '';
-
- return '<div class="pn"><h2>Elige el documento administrativo</h2>'
- + '<label class="rc"><input type="radio" name="docSt" value="consent" '+(docSelT==='consent'?'checked':'')+'><b>Consentimiento Informado</b><br><span class="sub">Documento legal con firmas digitales</span></label>'
- + '<label class="rc"><input type="radio" name="docSt" value="socio" '+(docSelT==='socio'?'checked':'')+'><b>Información sociodemográfica</b><br><span class="sub">Formulario de datos personales y antecedentes</span></label>'
- + feesForm
- + '<button class="btn big" id="mkDoc" data-a="mkDoc">Generar enlace de documento</button><button class="btn s" data-a="pbd">Imprimir formulario en blanco (PDF)</button><div id="er" class="note" hidden></div></div>'
- + renderLinks();
-}
-
-function renderLinks(){
- return '<div class="pn"><h2>Enlaces generados</h2><button class="btn s sm" data-a="sync" style="margin:0 0 6px">Actualizar estados desde la nube</button>'+(LK.length?LK.map((x,i)=>{const stt=x.st?(x.st==='done'?'Respondido':(x.exp&&x.exp<Date.now()?'Vencido':'Pendiente')):'';return '<div class="row"><div><b>'+esc(TESTS[x.t]?TESTS[x.t].n:x.t)+'</b> <span class="sub">'+fdt(x.at)+'</span>'+(stt?'<span class="bg">'+stt+'</span>':'')+'<div class="lk">'+esc(x.l)+'</div></div><div><button class="btn sm" data-a="lk" data-i="'+i+'">Copiar</button><a class="btn sm s" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent('Hola, este es tu enlace: '+x.l)+'">WhatsApp</a><button class="btn sm s" data-a="dl" data-i="'+i+'">Eliminar</button></div></div>'}).join(''):'<p class="sub">Aún no has generado enlaces.</p>')+'</div>';
-}
-
-const rowsHTML=(t,r)=>{
- if(t.socio)return SDL.map(([k,l])=>'<tr><td>'+esc(l)+'</td><td>'+(nl(sdv(r.d||{},k))||'—')+'</td></tr>').join('');
- if(t.consent){
-   const d = r.d||{};
-   return '<tr><td colspan="2"><b>Lugar:</b> '+esc(d.lugar||'')+'<br><b>Tel:</b> '+esc(d.tel||'')+'<br><br><b>Firma del Paciente:</b><br><img src="'+d.sig+'" style="max-height:80px;border:1px solid #ccc;background:#fff;border-radius:4px;margin-top:4px"><br><b>Fecha:</b> '+new Date(d.date||r.at).toLocaleDateString('es-CO')+'<br><br>'+
-   (d.psig ? '<b>Firma Profesional:</b><br><img src="'+d.psig+'" style="max-height:80px;border:1px solid #ccc;background:#fff;border-radius:4px;margin-top:4px"><br><b>Fecha cierre:</b> '+new Date(d.pdate).toLocaleDateString('es-CO')+'<br><span class="bg" style="background:var(--ac);margin-left:0;margin-top:6px;display:inline-block">Documento Sellado y Bloqueado</span>' 
-           : '<div style="background:var(--bg);padding:10px;border-radius:8px;border:1px solid var(--bd)"><p style="margin:0 0 10px;color:var(--ac)"><b>Fase 3: Firma y Cierre Profesional</b></p><button class="btn sm" data-a="sealReq" data-id="'+r.id+'" style="margin:0">Colocar mi firma y sellar definitivamente</button></div>') +
-   '</td></tr>';
- }
- return FLD(t).map((f,i)=>(f.h?'<tr><td colspan="2"><b>'+esc(f.h)+'</b></td></tr>':'')+'<tr><td>'+(f.n||i+1)+'. '+esc(f.q)+'</td><td>'+esc(LBL(t,f,r.ans[i]))+(f.x&&r.x?' — '+esc(r.x):'')+'</td></tr>').join('');
-};
-
-function listHTML(){const q=F.q.trim().toLowerCase();const a=Object.entries(C.it).filter(([,r])=>(!F.t||r.t===F.t)&&(!q||(r.name+' '+r.doc).toLowerCase().includes(q))).sort((x,y)=>y[1].at-x[1].at);
- return a.length?a.map(([id,r])=>{const t=TESTS[r.t];return '<details data-id="'+id+'"><summary><b>'+esc(r.name)+'</b> · '+esc(t.n)+' · '+fdt(r.at)+(seen.has(id)?'':'<span class="bg">nuevo</span>')+'</summary><p class="sub">'+esc(r.tipo)+' '+esc(r.doc)+'</p><table class="'+(t.lbl||t.socio||t.consent?'wide':'')+'">'+rowsHTML(t,r)+'</table><button class="btn sm s" data-a="pf" data-id="'+id+'">Imprimir diligenciado (PDF)</button><button class="btn sm s" data-a="pbr" data-id="'+id+'">Imprimir en blanco</button><button class="btn sm s" data-a="del" data-id="'+id+'">Eliminar</button></details>'}).join(''):'<p class="sub">No hay respuestas para mostrar.</p>'}
-function vResp(){return '<div class="pn"><h2>Respuestas y Documentos Recibidos</h2><div class="r2"><select id="ft"><option value="">Todos los registros</option>'+Object.entries(TESTS).map(([k,v])=>'<option value="'+k+'"'+(F.t===k?' selected':'')+'>'+esc(v.n)+'</option>').join('')+'</select><input id="fq" placeholder="Buscar por nombre o documento" value="'+esc(F.q)+'"></div><div id="ls">'+listHTML()+'</div></div>'}
-function vInst(){return Object.entries(TESTS).map(([k,t])=>'<div class="pn"><h2>'+esc(t.n)+'</h2><p style="margin:0 0 6px"><b>'+esc(t.full)+'</b></p><p class="sub">'+(t.nq||FLD(t).length)+UN(t)+' · Periodo: '+INFO[k].per+'</p><p style="font-size:13.5px">'+esc(INFO[k].corr)+'</p><button class="btn sm s" data-a="pb" data-t="'+k+'">Imprimir en blanco (PDF)</button></div>').join('')}
-
+ +grp('test','Pruebas psicométricas')+grp('doc','Documentos clínicos')
+ +'<div class="r2">'+go('enviar')+'Enviar prueba o documento</button>'+go('resp').replace('btn big','btn big s')+'Ver respuestas</button></div>'+go('docs').replace('btn big','btn big s')+'Ver documentos</button>'}
+function vEnviar(){const r=LK[0];
+ const rc=([k,t])=>'<label class="rc"><input type="radio" name="st" value="'+k+'"'+(selT===k?' checked':'')+'><b>'+esc(t.n)+'</b> — '+esc(t.full)+'<br><span class="sub">'+(t.nq||FLD(t).length)+UN(t)+' · '+INFO[k].per+'</span></label>';
+ return '<div class="pn"><h2>Pruebas psicométricas</h2>'+byG('test').map(rc).join('')+'</div><div class="pn"><h2>Documentos clínicos</h2>'+byG('doc').map(rc).join('')+'</div>'+(selT==='consent'?cfgHTML():'')+'<div class="pn">'
+ +'<button class="btn big" id="mk" data-a="mk">Generar enlace único</button><button class="btn s" data-a="pb">Imprimir formulario en blanco (PDF)</button><p class="sub">No necesitas escribir el nombre del paciente: él lo ingresa al responder. Cada enlace sirve para una sola persona y vence en 30 días.</p><div id="er" class="note" hidden></div></div>'
+ +'<div class="pn"><h2>Enlaces</h2><button class="btn s sm" data-a="sync" style="margin:0 0 6px">Actualizar estados desde la nube</button>'+(LK.length?LK.map((x,i)=>{const stt=x.st?(x.st==='done'?'Respondido':(x.exp&&x.exp<Date.now()?'Vencido':'Pendiente')):'';return '<div class="row"><div><b>'+esc(TESTS[x.t]?TESTS[x.t].n:x.t)+'</b> <span class="sub">'+fdt(x.at)+'</span>'+(stt?'<span class="bg">'+stt+'</span>':'')+'<div class="lk">'+esc(x.l)+'</div></div><div><button class="btn sm" data-a="lk" data-i="'+i+'">Copiar</button><a class="btn sm s" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent('Hola, este es tu enlace para responder la prueba: '+x.l)+'">WhatsApp</a><button class="btn sm s" data-a="dl" data-i="'+i+'">Eliminar</button></div></div>'}).join(''):'<p class="sub">Aún no has generado enlaces en este dispositivo.</p>')+'</div>'}
+const rowsHTML=(t,r)=>t.socio?SDL.map(([k,l])=>'<tr><td>'+esc(l)+'</td><td>'+(nl(sdv(r.d||{},k))||'—')+'</td></tr>').join(''):FLD(t).map((f,i)=>(f.h?'<tr><td colspan="2"><b>'+esc(f.h)+'</b></td></tr>':'')+'<tr><td>'+(f.n||i+1)+'. '+esc(f.q)+'</td><td>'+esc(LBL(t,f,r.ans[i]))+(f.x&&r.x?' — '+esc(r.x):'')+'</td></tr>').join('');
+const cfgPrev=()=>chtml(CL(CFG).filter(b=>b.f));
+function cfgHTML(){const f=(k,l)=>'<div><label>'+l+'</label><input id="cf_'+k+'" inputmode="numeric" maxlength="9" value="'+CFG[k]+'"'+(CFG.fees?'':' disabled')+'></div>';
+ return '<div class="pn"><h2>Configurar el consentimiento</h2><label class="ck" style="margin:0 0 6px"><input type="checkbox" id="cf_fees"'+(CFG.fees?' checked':'')+'> Incluir la sección de honorarios, formas de pago y paquetes</label>'
+ +'<div class="r2">'+f('v','Sesión virtual (COP)')+f('p','Sesión presencial (COP)')+f('dm','Sesión domiciliaria (COP)')+f('u','Residentes fuera de Colombia, sesión virtual (USD)')+f('pv','Paquete 4 virtuales (COP)')+f('pp','Paquete 4 presenciales (COP)')+f('pd','Paquete 4 domiciliarias (COP)')+f('pu','Paquete fuera de Colombia (USD)')+'</div>'
+ +'<div class="note">'+(CFG.fees?'Los valores viajan en el enlace y quedan registrados en el documento firmado; el paciente no puede cambiarlos. Así se verá la sección:':'La sección de honorarios no aparecerá en el documento del paciente y los apartados siguientes se renumeran. Los apartados 4.1 y 4.2 conservan sus menciones al pago.')+'</div><div id="cfp" style="margin-top:6px">'+(CFG.fees?cfgPrev():'')+'</div></div>'}
+const cfgSave=()=>{const c={fees:!!CFG.fees};for(const k of ['v','p','dm','u','pv','pp','pd','pu']){c[k]=Math.trunc(Number(CFG[k]));if(!(c[k]>=0)||(CFG.fees&&c[k]===0))throw{code:'faltan valores de honorarios'}}return c};
+function spu(){const b=$('spb');if(b)b.disabled=!(SP&&SP.has()&&$('spk')&&$('spk').checked)}
+const signHTML=id=>'<div class="note">Dibuje su firma con el dedo o el mouse. Al sellar, el documento queda bloqueado: nadie podrá modificarlo ni eliminarlo desde esta aplicación.</div><canvas class="sg" id="spc" width="600" height="200" style="margin-top:8px"></canvas><div><button class="btn sm s" data-a="spx">Borrar firma</button>'+(sgOK(LS('psg',''))?'<button class="btn sm s" data-a="spu">Usar mi firma guardada</button>':'')+'</div>'
+ +'<label class="ck"><input type="checkbox" id="spk"> Revisé el documento y firmo como '+esc(PRO)+' (T.P. '+TP+').</label><label class="ck"><input type="checkbox" id="sps"> Recordar mi firma en este dispositivo</label>'
+ +'<button class="btn" id="spb" data-a="spb" data-id="'+id+'" disabled>Firmar, fechar y sellar</button><button class="btn s" data-a="spc2" data-id="'+id+'">Cancelar</button>';
+function consentBody(id,r){const D=r.d||{},row=(k,v)=>'<tr><td>'+k+'</td><td>'+v+'</td></tr>';
+ return '<table class="wide">'+row('Nombre',esc(r.name))+row('Documento',esc(r.tipo+' '+r.doc)+' · expedido en '+esc(D.exp||''))+row('Teléfono',esc(D.tel||''))+row('Firmado por el paciente',fdt(r.at))+row('Honorarios en el documento',r.c&&r.c.fees?'Incluidos':'No incluidos')
+ +row('Firma del paciente',sgOK(r.sig)?'<img class="sgi" src="'+r.sig+'" alt="Firma">':'—')
+ +row('Estado',r.sealed?'<b>Sellado</b> el '+fdt(r.pm)+' · código '+code(r.sh):'<b>Pendiente de su firma y sello</b>')+'</table>'
+ +(r.sealed?'':'<div id="sg_'+id+'">'+(SIGN===id?signHTML(id):'')+'</div>')
+ +'<button class="btn sm s" data-a="pf" data-id="'+id+'">'+(r.sealed?'Imprimir documento final (PDF)':'Imprimir copia (PDF)')+'</button>'
+ +(r.sealed?'<button class="btn sm s" data-a="vf" data-id="'+id+'">Verificar integridad</button><p class="sub">Documento sellado y bloqueado: no se puede modificar ni eliminar.</p>':'<button class="btn sm" data-a="sg" data-id="'+id+'">Firmar y sellar</button><button class="btn sm s" data-a="del" data-id="'+id+'">Eliminar</button>')}
+function listHTML(g,tt){const q=F.q.trim().toLowerCase();const a=Object.entries(C.it).filter(([,r])=>TESTS[r.t]&&(tt?r.t===tt:gr(r.t)===g&&(!F.t||r.t===F.t))&&(!q||(r.name+' '+r.doc).toLowerCase().includes(q))).sort((x,y)=>y[1].at-x[1].at);
+ return a.length?a.map(([id,r])=>{const t=TESTS[r.t],nw=seen.has(id)?'':'<span class="bg">nuevo</span>';
+  if(t.consent)return '<details data-id="'+id+'"><summary><b>'+esc(r.name)+'</b> · '+fdt(r.at)+(r.sealed?'<span class="bg" style="background:#2e9e5b">sellado</span>':'<span class="bg" style="background:#e5484d">por firmar</span>')+nw+'</summary>'+consentBody(id,r)+'</details>';
+  return '<details data-id="'+id+'"><summary><b>'+esc(r.name)+'</b> · '+esc(t.n)+' · '+fdt(r.at)+nw+'</summary><p class="sub">'+esc(r.tipo)+' '+esc(r.doc)+'</p><table class="'+(t.lbl||t.socio?'wide':'')+'">'+rowsHTML(t,r)+'</table><button class="btn sm s" data-a="cp" data-id="'+id+'">Copiar respuestas</button><button class="btn sm s" data-a="pf" data-id="'+id+'">Imprimir diligenciado (PDF)</button><button class="btn sm s" data-a="pbr" data-id="'+id+'">Imprimir en blanco</button><button class="btn sm s" data-a="del" data-id="'+id+'">Eliminar</button></details>'}).join(''):'<p class="sub">No hay respuestas para mostrar.</p>'}
+const refresh=()=>{if($('ls'))$('ls').innerHTML=listHTML('test');['consent','socio'].forEach(k=>{if($('ls_'+k))$('ls_'+k).innerHTML=listHTML('doc',k)})};
+function vResp(){return '<div class="pn"><h2>Respuestas recibidas</h2><div class="r2"><select id="ft"><option value="">Todas las pruebas</option>'+byG('test').map(([k,v])=>'<option value="'+k+'"'+(F.t===k?' selected':'')+'>'+esc(v.n)+'</option>').join('')+'</select><input id="fq" placeholder="Buscar por nombre o documento" value="'+esc(F.q)+'"></div><button class="btn s" data-a="ex">Exportar a CSV</button><div id="ls">'+listHTML('test')+'</div></div>'}
+function vDocs(){const pn=(k,h,s)=>'<div class="pn"><h2>'+h+'</h2><p class="sub" style="margin:0 0 6px">'+s+'</p><div id="ls_'+k+'">'+listHTML('doc',k)+'</div><button class="btn s" data-a="ex" data-t="'+k+'">Exportar a CSV</button></div>';
+ return '<div class="pn"><input id="fq" placeholder="Buscar por nombre o documento" value="'+esc(F.q)+'"></div>'+pn('consent','Consentimientos informados','Firmados por el paciente; usted los firma y sella al final.')+pn('socio','Datos sociodemográficos','Información básica y antecedentes diligenciados por el paciente.')}
+function vInst(){const one=([k,t])=>'<div class="pn"><h2>'+esc(t.n)+'</h2><p style="margin:0 0 6px"><b>'+esc(t.full)+'</b></p><p class="sub">'+(t.nq||FLD(t).length)+UN(t)+' · Periodo: '+INFO[k].per+(t.sc?' · Escala '+t.sc[0][0]+' a '+t.sc[t.sc.length-1][0]:'')+'</p><p style="font-size:13.5px">'+esc(INFO[k].corr)+'</p><p class="sub">'+INFO[k].ref.map(esc).join('<br>')+'</p><details><summary>'+(t.socio?'Ver secciones':'Ver preguntas'+(t.sc?' y escala':''))+'</summary>'+(t.sc?'<p class="sub">'+t.sc.map(x=>x[0]+' = '+esc(x[1])).join(' · ')+'</p>':'')+'<table>'+FLD(t).map((f,i)=>(f.h?'<tr><td><b>'+esc(f.h)+'</b></td></tr>':'')+'<tr><td>'+(f.n||i+1)+'. '+esc(f.q)+'</td></tr>').join('')+'</table></details><button class="btn sm" data-go="enviar" data-t="'+k+'">Enviar este instrumento</button><button class="btn sm s" data-a="pb" data-t="'+k+'">Imprimir en blanco (PDF)</button></div>';return[['test','Pruebas psicométricas'],['doc','Documentos clínicos']].map(([g,l])=>'<h2 class="gh" style="margin:6px 0 8px">'+l+'</h2>'+byG(g).map(one).join('')).join('')}
 async function onClick(e){
  const g=e.target.closest('[data-go]');if(g){V=g.dataset.go;if(g.dataset.t)selT=g.dataset.t;draw();return}
  const sm=e.target.closest('summary');if(sm&&sm.parentNode.dataset.id){seen.add(sm.parentNode.dataset.id);save();tabs();return}
  const b=e.target.closest('button[data-a]');if(!b)return;const a=b.dataset.a,id=b.dataset.id,r=C.it[id];
- 
- if(a==='mk' || a==='mkDoc'){
-  b.disabled=true;
-  try{
-    const targetT = a === 'mk' ? selT : docSelT;
-    const d=doc(collection(db,'invites'));
-    let payload = {t:targetT, n:PRO, status:'pending', createdAt:serverTimestamp(), exp:Timestamp.fromMillis(Date.now()+30*864e5)};
-    
-    if(targetT === 'consent'){
-      const sf = $('showFees') ? $('showFees').checked : true;
-      const customFc = {
-        sv: $('f_sv').value.trim(), sp: $('f_sp').value.trim(), sd: $('f_sd').value.trim(), se: $('f_se').value.trim(),
-        pv: $('f_pv').value.trim(), pp: $('f_pp').value.trim(), pd: $('f_pd').value.trim(), pe: $('f_pe').value.trim()
-      };
-      feesConfig = customFc;
-      payload.showFees = sf;
-      payload.customFees = customFc;
-    }
-    
-    await setDoc(d, payload);
-    LK.unshift({id:d.id, l:location.origin+location.pathname+'?i='+d.id, t:targetT, at:Date.now()});
-    LK=LK.slice(0,30); save(); draw();
-  }catch(x){b.disabled=false;$('er').hidden=false;$('er').textContent='No se pudo crear el enlace ('+(x.code||'error')+').'}
- }
- 
- if(a==='pb'){printDoc(b.dataset.t||selT,null);return;}
- if(a==='pbd'){ // Para imprimir documentos administrativos en blanco desde la vista de creación
-   const targetT = docSelT;
-   let d = null;
-   if(targetT === 'consent'){
-     d = {
-       showFees: $('showFees') ? $('showFees').checked : true,
-       customFees: {
-         sv: $('f_sv').value.trim(), sp: $('f_sp').value.trim(), sd: $('f_sd').value.trim(), se: $('f_se').value.trim(),
-         pv: $('f_pv').value.trim(), pp: $('f_pp').value.trim(), pd: $('f_pd').value.trim(), pe: $('f_pe').value.trim()
-       }
-     };
-   }
-   printDoc(targetT, null, {d: d});
-   return;
- }
- if(a==='pf'&&r){printDoc(r.t,r.ans,{name:r.name,tipo:r.tipo,doc:r.doc,x:r.x,d:r.d,at:r.at});return;}
- if(a==='pbr'&&r){printDoc(r.t,null,{d:r.d});return;} // Imprimir en blanco usando la config guardada
- 
+  if(a==='sg'&&r&&!r.sealed){if(SIGN&&$('sg_'+SIGN))$('sg_'+SIGN).innerHTML='';SIGN=id;seen.add(id);save();$('sg_'+id).innerHTML=signHTML(id);SP=pad($('spc'),spu);return}
+ if(a==='spx'){SP&&SP.clear();return}
+ if(a==='spu'){const im=new Image();im.onload=()=>{SP.clear();SP.ctx.drawImage(im,0,0,600,200);SP.set()};im.src=LS('psg','');return}
+ if(a==='spc2'){const i=SIGN;SIGN=null;SP=null;if(i&&$('sg_'+i))$('sg_'+i).innerHTML='';return}
+ if(a==='spb'){b.disabled=true;b.textContent='Sellando…';
+  try{const ref=doc(db,'responses',id),sn=await getDoc(ref);if(!sn.exists())throw{code:'no-existe'};const cd=sn.data();
+   if(cd.sealed){C.it[id].sealed=true;SIGN=null;SP=null;save();draw();alert('Este documento ya estaba sellado.');return}
+   const ps=SP.png(),pm=Date.now(),rr={t:cd.t,name:cd.name,tipo:cd.tipo,doc:cd.doc,d:cd.d,c:cd.c,sig:cd.sig,th:cd.th,at:cd.at.toMillis()},sh=await sha(canon(rr,ps,pm));
+   await updateDoc(ref,{ps,pat:serverTimestamp(),pm,sh,sealed:true});
+   if($('sps')&&$('sps').checked){try{localStorage.setItem('psg',JSON.stringify(ps))}catch(x){}}
+   Object.assign(C.it[id],{ps,pm,sh,sealed:true});SIGN=null;SP=null;save();draw()}
+  catch(x){b.disabled=false;b.textContent='Firmar, fechar y sellar';alert('No se pudo sellar ('+(x.code||'error')+'). Revisa que las reglas de seguridad estén publicadas.')}return}
+ if(a==='vf'&&r){const ok1=(await sha(canon(r,r.ps,r.pm)))===r.sh,ok2=(await sha(cplain(r.c)))===r.th;alert(ok1?(ok2?'Documento íntegro: coincide con lo firmado y sellado.':'Los datos firmados son íntegros, pero el texto del formato cambió en la app después de la firma.'):'¡Atención! Los datos de este documento no coinciden con su código de sellado.');return}
+ if(a==='del'&&r&&r.sealed){alert('Un documento sellado no se puede eliminar.');return}
+ if(a==='ex'&&b.dataset.t==='consent'){const q=s=>'"'+String(s).replace(/"/g,'""')+'"',rows=Object.entries(C.it).filter(([,r2])=>r2.t==='consent').sort((x,y)=>x[1].at-y[1].at),H=['fecha_firma','codigo','nombre','tipo_doc','documento','expedido_en','telefono','honorarios_incluidos','estado','fecha_sello','codigo_verificacion'];
+  const out=[H.map(q).join(',')].concat(rows.map(([i2,r2])=>[fdt(r2.at),i2,r2.name,r2.tipo,r2.doc,(r2.d||{}).exp||'',(r2.d||{}).tel||'',r2.c&&r2.c.fees?'sí':'no',r2.sealed?'sellado':'por firmar',r2.sealed?fdt(r2.pm):'',r2.sealed?code(r2.sh):''].map(q).join(',')));
+  const l=document.createElement('a');l.href=URL.createObjectURL(new Blob(['\ufeff'+out.join('\n')],{type:'text/csv'}));l.download='respuestas-Consentimiento.csv';l.click();return}
+ if(a==='mk'){b.disabled=true;try{const d=doc(collection(db,'invites'));await setDoc(d,{t:selT,n:PRO,status:'pending',createdAt:serverTimestamp(),exp:Timestamp.fromMillis(Date.now()+30*864e5),...(selT==='consent'?{cfg:cfgSave()}:{})});
+   LK.unshift({id:d.id,l:location.origin+location.pathname+'?i='+d.id,t:selT,at:Date.now()});LK=LK.slice(0,30);save();draw()}
+  catch(x){b.disabled=false;$('er').hidden=false;$('er').textContent='No se pudo crear el enlace ('+(x.code||'error')+'). Revisa que las reglas de seguridad estén publicadas.'}}
  if(a==='lk'){try{await navigator.clipboard.writeText(LK[+b.dataset.i].l);b.textContent='¡Copiado!'}catch(x){}}
+ if(a==='pb'){printDoc(b.dataset.t||selT,null);return}
+ if(a==='pf'&&r){printDoc(r.t,r.ans,r.t==='consent'?r:{name:r.name,tipo:r.tipo,doc:r.doc,x:r.x,d:r.d,at:r.at});return}
+ if(a==='pbr'&&r){printDoc(r.t,null);return}
  if(a==='sync'){b.disabled=true;try{const q=await getDocs(query(collection(db,'invites'),orderBy('createdAt','desc'),limit(30)));LK=q.docs.map(d=>{const v=d.data();return{id:d.id,l:location.origin+location.pathname+'?i='+d.id,t:v.t,at:v.createdAt?v.createdAt.toMillis():0,st:v.status,exp:v.exp?v.exp.toMillis():0}});save();draw()}catch(x){b.disabled=false;alert('No se pudo actualizar ('+(x.code||'error')+').')}return}
- if(a==='dl'){const n=+b.dataset.i,x=LK[n];if(x&&confirm('¿Eliminar este enlace?')){try{await deleteDoc(doc(db,'invites',x.id||new URL(x.l).searchParams.get('i')));LK.splice(n,1);save();draw()}catch(x2){alert('No se pudo eliminar ('+(x2.code||'error')+').')}}return}
+ if(a==='dl'){const n=+b.dataset.i,x=LK[n];if(x&&confirm('¿Eliminar este enlace? Dejará de funcionar. Las respuestas ya recibidas no se borran.')){try{await deleteDoc(doc(db,'invites',x.id||new URL(x.l).searchParams.get('i')));LK.splice(n,1);save();draw()}catch(x2){alert('No se pudo eliminar ('+(x2.code||'error')+').')}}return}
+ if(a==='cp'){const t=TESTS[r.t];try{await navigator.clipboard.writeText('RESPUESTAS '+t.n+'\n'+r.name+' · '+r.tipo+' '+r.doc+'\n'+fdt(r.at)+'\n'+(t.socio?SDL.map(([k,l])=>l+': '+(sdv(r.d||{},k).replace(/\n/g,'; ')||'—')).join('\n'):[...r.ans].map((v,i)=>(FLD(t)[i].n||i+1)+': '+LBL(t,FLD(t)[i],v)).join('\n')));b.textContent='¡Copiado!'}catch(x){}}
  if(a==='del'&&confirm('¿Eliminar esta respuesta de forma definitiva?')){const w=writeBatch(db);w.delete(doc(db,'responses',id));w.delete(doc(db,'invites',id));await w.commit();delete C.it[id];save();draw()}
- 
- if(a==='sealReq'){
-    $('app').insertAdjacentHTML('beforeend', '<div id="mod" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:99;padding:16px"><div class="pn" style="width:100%;max-width:400px;margin:0"><h3>Firma Profesional (Fase 3)</h3><p class="sub">Al firmar, el documento quedará bloqueado e inalterable.</p><canvas id="mCv" width="350" height="150" style="width:100%;height:150px;background:#fff;border:1px dashed var(--bd);border-radius:6px;touch-action:none;cursor:crosshair"></canvas><div style="text-align:right;margin-top:6px"><button class="btn s sm" id="mClr" type="button" style="margin:0">Limpiar</button></div><div style="display:flex;gap:8px;margin-top:14px"><button class="btn" id="mOk" disabled>Sellar Definitivamente</button><button class="btn s" id="mCx">Cancelar</button></div></div></div>');
-    const cv=$('mCv'), cx=cv.getContext('2d');
-    let drw=false; cx.lineWidth = 2; cx.lineCap = 'round';
-    const p = e => { const rt = cv.getBoundingClientRect(); return { x: (e.touches?e.touches[0].clientX:e.clientX)-rt.left, y: (e.touches?e.touches[0].clientY:e.clientY)-rt.top }; };
-    const st = e => { e.preventDefault(); drw = true; $('mOk').disabled=false; const c = p(e); cx.beginPath(); cx.moveTo(c.x, c.y); };
-    const mv = e => { e.preventDefault(); if(!drw)return; const c = p(e); cx.lineTo(c.x, c.y); cx.stroke(); };
-    const nd = e => { drw = false; };
-    cv.addEventListener('mousedown', st); cv.addEventListener('mousemove', mv); cv.addEventListener('mouseup', nd); cv.addEventListener('mouseout', nd);
-    cv.addEventListener('touchstart', st, {passive:false}); cv.addEventListener('touchmove', mv, {passive:false}); cv.addEventListener('touchend', nd);
-    $('mClr').onclick = () => { cx.clearRect(0,0,cv.width,cv.height); $('mOk').disabled=true; };
-    $('mCx').onclick = () => $('mod').remove();
-    $('mOk').onclick = async () => {
-        $('mOk').disabled = true; $('mOk').textContent = 'Sellando...';
-        try {
-            await updateDoc(doc(db, 'responses', id), { 'd.psig': cv.toDataURL(), 'd.pdate': Date.now() });
-            $('mod').remove(); C.it[id].d.psig = cv.toDataURL(); C.it[id].d.pdate = Date.now(); draw();
-        } catch(err) {
-            alert('Error al guardar. Revisa las reglas de Firestore.');
-            $('mOk').disabled = false; $('mOk').textContent = 'Sellar Definitivamente';
-        }
-    };
- }
-}
-
-if(FB.apiKey==='PEGA_AQUI')$('app').innerHTML='<div class="pn">Falta pegar la configuración de Firebase en index.html</div>';
+ if(a==='ex'){const ft=b.dataset.t||F.t||'dass21',t=TESTS[ft],q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+  const rows=Object.entries(C.it).filter(([,r])=>r.t===ft).sort((x,y)=>x[1].at-y[1].at);
+  const out=[['fecha','codigo','nombre','tipo_doc','documento'].concat(t.socio?SDL.map(x=>x[1]):FLD(t).map((f,i)=>'p'+(f.n||i+1)).concat(t.lbl?['otros_especifique']:[])).map(q).join(',')].concat(rows.map(([id,r])=>[fdt(r.at),id,r.name,r.tipo,r.doc].concat(t.socio?SDL.map(([k])=>sdv(r.d||{},k).replace(/\n/g,' | ')):[...r.ans].map((c,i)=>LBL(t,FLD(t)[i],c)),t.lbl?[r.x||'']:[]).map(q).join(',')));
+  const l=document.createElement('a');l.href=URL.createObjectURL(new Blob(['\ufeff'+out.join('\n')],{type:'text/csv'}));l.download='respuestas-'+t.n+'.csv';l.click()}}
+if(FB.apiKey==='PEGA_AQUI')$('app').innerHTML='<div class="pn">Falta pegar la configuración de Firebase en index.html (ver LEEME.md).</div>';
 else if(ID)patient();else onAuthStateChanged(auth,u=>u?shell():login());
 </script></body></html>
