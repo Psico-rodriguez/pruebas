@@ -44,6 +44,7 @@ table{border-collapse:collapse;width:100%;font-size:13px}td{padding:3px 6px;bord
 textarea{width:100%;padding:8px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit;resize:vertical}input[readonly]{opacity:.7}
 .cv{display:grid;grid-template-columns:1.2fr 2fr .6fr 1.6fr;gap:6px;margin-bottom:6px}@media(max-width:560px){.cv{grid-template-columns:1fr 1fr;padding-bottom:8px;border-bottom:1px dashed var(--bd)}}
 .hint{font-size:12px;color:var(--mu);margin:0 0 4px}.gh+.op,.gh+.hint{margin-top:4px}
+@media print{.pg2{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;margin:6px 0}.sh{font-size:12.5px;margin:12px 0 2px;break-after:avoid}.sh small{font-size:10px;color:#555}.sl{margin:2px 0 4px 18px;padding:0}.sl li{margin:1px 0}}
 </style></head><body><div class="w" id="app"><div class="pn">Cargando…</div></div><div id="pr"></div>
 <script type="module">
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
@@ -130,6 +131,76 @@ const nl=s=>esc(s).replace(/\n/g,'<br>');
 const PD=t=>'<div class="pn"><h2>Tus datos</h2><label>Nombres y apellidos</label><input id="pn" maxlength="120"><div class="r2"><div><label>Tipo de documento</label><select id="pd"><option>C.C.</option><option>T.I.</option><option>C.E.</option><option>Pasaporte</option><option>PPT</option></select></div><div><label>Número de documento</label><input id="pc" inputmode="numeric" maxlength="30"></div></div></div>'
  +'<div class="pn"><h2>Consentimiento</h2><p style="font-size:13px;margin:0">Autorizo a mi profesional a recibir y tratar '+(t.socio||t.consent?'mis datos personales y sensibles (incluidos los relacionados con mi salud)':'mis respuestas')+' con fines exclusivamente clínicos, de manera confidencial y de acuerdo con la normatividad colombiana sobre protección de datos personales y secreto profesional.</p><label class="ck"><input type="checkbox" id="pk"> He leído y acepto lo anterior.</label></div>';
 
+/* ===== IMPRESIÓN / PDF ===== */
+function printDoc(k,ans,m){
+ if(TESTS[k].socio)return printSocio(m);
+ if(TESTS[k].consent)return printConsent(m);
+ const t=TESTS[k],F=FLD(t),a=ans?[...ans]:null;m=m||{};const d=ms=>new Date(ms).toLocaleDateString('es-CO');
+ const f=(l,v)=>'<div class="pf"><span>'+l+'</span><b>'+(v?esc(v):'')+'</b></div>';let tb;
+ if(t.lbl){tb='<table class="pt lb"><tbody>'+F.map((q,i)=>{const op=q.c?'<span class="po">'+(a&&a[i]==='1'?'☑':'☐')+' Sí</span>':q.o.map(o=>{const sl=a&&a[i]===String(o[0]);return '<span class="po">'+(sl?'<b>● '+esc(o[1])+'</b>':'○ '+esc(o[1]))+'</span>'}).join('');
+   return (q.h?'<tr><td colspan="2"><b>'+esc(q.h)+'</b></td></tr>':'')+'<tr><td style="width:44%">'+(q.n||i+1)+'. '+esc(q.q)+(q.x?(a?(m.x?' — '+esc(m.x):''):' ____________'):'')+'</td><td>'+(a&&q.dep!==undefined&&a[i]==='2'?'No aplica':op)+'</td></tr>'}).join('')+'</tbody></table>'}
+ else{const cols=t.sc.map(x=>x[0]);tb='<table class="pt"><thead><tr><th class="c">#</th><th>Afirmación</th>'+cols.map(c=>'<th class="c">'+c+'</th>').join('')+'</tr></thead><tbody>'+F.map((q,i)=>'<tr><td class="c">'+(i+1)+'</td><td>'+esc(q.q)+'</td>'+cols.map(c=>'<td class="c"><span class="'+(a&&a[i]==c?'on':'of')+'">'+c+'</span></td>').join('')+'</tr>').join('')+'</tbody></table>'}
+ $('pr').innerHTML='<div class="pp"><div class="ph">'+LOGO+'<div><h1>'+esc(t.full)+'</h1><div>'+esc(PRO)+' · Psicología</div></div></div>'
+ +'<div class="pm">'+f('Nombres y apellidos',m.name)+f('Documento',m.tipo?m.tipo+' '+m.doc:'')+f('Fecha',m.at?d(m.at):'')+'</div>'
+ +'<p>'+esc(t.ins)+'</p>'+(t.sc?'<div class="pl">'+t.sc.map(x=>'<b>'+x[0]+'</b> = '+esc(x[1])).join(' · ')+'</div>':'')+tb
+ +'<div class="pfoot">'+(a?'Documento diligenciado a partir de las respuestas registradas el '+d(Date.now())+'. ':'Formato en blanco generado el '+d(Date.now())+'. ')+'Instrumento de tamizaje: por sí solo no constituye un diagnóstico.</div></div>';
+ addEventListener('afterprint',()=>{$('pr').innerHTML=''},{once:true});setTimeout(()=>print(),60);
+}
+
+function printSocio(m){
+ m=m||{};const D=m.d||{},B=!!m.d,dt=ms=>new Date(ms).toLocaleDateString('es-CO');
+ const f=(l,v)=>'<div class="pf"><span>'+l+'</span><b>'+(v?esc(v):'')+'</b></div>';
+ const yn=k=>'<span class="po">'+(B&&D[k]==='1'?'☑':'☐')+' Sí</span><span class="po">'+(B&&D[k]==='0'?'☑':'☐')+' No</span>';
+ const ls=(k,n)=>{if(!B)return Array(n).fill('<div class="pf"></div>').join('');const a=(D[k]||'').split('\n').filter(Boolean);return a.length?'<ul class="sl">'+a.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'<div class="pf"><b>—</b></div>'};
+ const sh=(t,s)=>'<div class="sh"><b>'+t+'</b>'+(s?' <small>'+s+'</small>':'')+'</div>';
+ const cv=B?(D.conv||'').split('\n').filter(Boolean).map(r=>r.split('\t')):[];while(cv.length<4)cv.push([]);
+ const tb='<table class="pt"><thead><tr><th>Parentesco</th><th>Nombre</th><th class="c" style="width:48px">Edad</th><th>Ocupación</th></tr></thead><tbody>'+cv.map(r=>'<tr style="height:24px">'+[0,1,2,3].map(i=>'<td'+(i===2?' class="c"':'')+'>'+esc(r[i]||'')+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
+ $('pr').innerHTML='<div class="pp"><div class="ph">'+LOGO+'<div><h1>DATOS SOCIODEMOGRÁFICOS</h1><div>'+esc(PRO)+' · Psicología</div></div></div>'
+ +'<p>'+esc(TESTS.socio.ins)+'</p>'
+ +sh('1. Datos generales','Información básica y del contacto de emergencia')
+ +'<div class="pg2">'+f('Nombres y apellidos',m.name)+f('Número y tipo de documento',m.tipo?m.tipo+' '+m.doc:'')+f('Fecha de nacimiento',sdv(D,'fnac'))+f('Edad',D.edad)+f('Ocupación',D.ocu)+f('Número de teléfono',D.tel)+f('Dirección de residencia',D.dir)+f('Nombre del contacto de emergencia',D.ecn)+f('Teléfono del contacto de emergencia',D.ect)+'</div>'
+ +sh('2. Antecedentes de enfermedades','Enfermedad diagnosticada a lo largo de la vida, con la fecha del diagnóstico')+ls('enf',5)
+ +sh('3. ¿Anteriormente ha acudido a los servicios de Psicología/Psiquiatría?')+'<div style="margin:2px 0">'+yn('psi')+'</div>'
+ +sh('3.1 Antecedentes de diagnósticos psicológicos/psiquiátricos','Diagnóstico psiquiátrico o impresión diagnóstica psicológica, con la fecha')+ls('dpsi',5)
+ +sh('4. ¿Toma algún medicamento actualmente?')+'<div style="margin:2px 0">'+yn('med')+'</div>'
+ +sh('4.1 Medicamentos que toma actualmente','Junto con la fecha en la cual inició el consumo')+ls('dmed',5)
+ +sh('5. Antecedentes psiquiátricos familiares','Indicar el parentesco')+ls('fam',5)
+ +sh('6. ¿Consume alguna sustancia psicoactiva?','Ejemplo: marihuana, cocaína, entre otros')+'<div style="margin:2px 0">'+yn('sus')+'</div>'
+ +sh('7. Características sociodemográficas','Personas con las que vive actualmente')+tb
+ +'<div class="pfoot">'+(B?'Documento diligenciado a partir de las respuestas registradas el '+dt(Date.now())+'. ':'Formato en blanco generado el '+dt(Date.now())+'. ')+'Información confidencial sujeta a secreto profesional.</div></div>';
+ addEventListener('afterprint',()=>{$('pr').innerHTML=''},{once:true});setTimeout(()=>print(),60);
+}
+
+function printConsent(m){
+ m=m||{};const D=m.d||{},B=!!m.d,dt=ms=>new Date(ms).toLocaleDateString('es-CO');
+ const f=(l,v)=>'<div class="pf"><span>'+l+'</span><b>'+(v?esc(v):'')+'</b></div>';
+ const fc = D.customFees || feesConfig;
+ const showFees = D.showFees !== false; // true if undefined
+ 
+ let html = '<div class="pp"><div class="ph">'+LOGO+'<div><h1>CONSENTIMIENTO INFORMADO - SERVICIO DE PSICOLOGÍA</h1><div>'+esc(PRO)+' · Psicología</div></div></div>'
+ +'<div class="pm">'+f('Nombres y apellidos',m.name)+f('Documento',m.tipo?m.tipo+' '+m.doc:'')+f('Fecha',m.at?dt(m.at):'')+'</div>'
+ +'<p style="font-size:11.5px">'+esc(TESTS.consent.ins)+'</p>'
+ + TXT_C1_5 + (showFees ? getTxtC6(fc) : '');
+
+ html += '<h3 class="gh">7. DECLARACIÓN DE CONSENTIMIENTO</h3>'
+ + '<p style="font-size:12.5px;text-align:justify;margin:8px 0">Yo, <b>'+(m.name||'_________________________')+'</b> identificado(a) con documento de identidad número <b>'+(m.tipo?m.tipo+' '+m.doc:'_________________________')+'</b> De <b>'+(D.lugar||'_________________________')+'</b> manifiesto: <br>1) Mi aceptación del proceso de evaluación e intervención ofrecido que me ha sido explicado y entendido por mí y cuyas condiciones generales me ha aclarado el psicólogo.<br>2) Que la información que le brindo al psicólogo es verdadera y corresponde a mi realidad, ya que sobre dicha información se plantean las propuestas de intervención.<br>3) Que he leído y comprendido íntegramente este documento y en consecuencia acepto su contenido y las consecuencias que de él se deriven y accedo a lo anteriormente mencionado.</p>';
+
+ // Firmas
+ html += '<div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:30px">';
+ // Firma paciente
+ html += '<div><b>Firma del usuario:</b><br>' + (B && D.sig ? '<img src="'+D.sig+'" style="max-height:80px;margin:10px 0">' : '<div style="height:80px;border-bottom:1px solid #000;margin:10px 0"></div>') 
+ + '<br>Nombres y Apellidos: '+(m.name||'')+'<br>C.C.: '+(m.tipo?m.tipo+' '+m.doc:'')+'<br>Teléfono: '+(D.tel||'')+'<br>Fecha: '+(D.date?dt(D.date):'')+'</div>';
+ // Firma Psicólogo
+ html += '<div><b>Firma del Psicólogo:</b><br>' + (B && D.psig ? '<img src="'+D.psig+'" style="max-height:80px;margin:10px 0">' : '<div style="height:80px;border-bottom:1px solid #000;margin:10px 0"></div>')
+ + '<br>Nombres y Apellidos: Oscar Steven Rodriguez Bustos<br>T.P.: 320281<br>Teléfono: 3228529736<br>Fecha: '+(D.pdate?dt(D.pdate):'')+'</div>';
+ html += '</div>';
+
+ html += '<div class="pfoot" style="margin-top:20px">'+(B?'Documento firmado digitalmente a partir de las declaraciones registradas el '+dt(Date.now())+'. ':'Formato en blanco generado el '+dt(Date.now())+'. ')+'Información confidencial sujeta a secreto profesional.</div></div>';
+
+ $('pr').innerHTML = html;
+ addEventListener('afterprint',()=>{$('pr').innerHTML=''},{once:true});setTimeout(()=>print(),60);
+}
+
 /* ===== PACIENTE ===== */
 async function patient(){
  let v;try{const s=await getDoc(doc(db,'invites',ID));if(!s.exists())throw 0;v=s.data()}catch(e){return say('Enlace no válido','Este enlace no es válido o ya venció. Solicita uno nuevo a tu profesional.')}
@@ -141,23 +212,79 @@ async function patient(){
  $('app').innerHTML=HD(t.full,'Solicitado por '+v.n)
  +PD(t)
  +'<div class="pn"><h2>Instrucciones</h2><p style="margin:0 0 6px">'+esc(t.ins)+'</p>'+(t.sc?'<div class="lg">'+t.sc.map(x=>'<b>'+x[0]+'</b> = '+esc(x[1])).join('<br>')+'</div>':'')
+ +'<button class="btn s sm" id="pb0" type="button">Imprimir formulario en blanco (PDF)</button>'
  +FLD(t).map((f,i)=>'<div class="it" id="r'+i+'">'+(f.h?'<h3 class="gh">'+esc(f.h)+'</h3>':'')+'<p>'+(f.n||i+1)+'. '+esc(f.q)+'</p><div class="op">'+(f.c?'<label><input type="checkbox" name="q'+i+'"><span>Sí</span></label>':f.o.map(s=>'<label><input type="radio" name="q'+i+'" value="'+s[0]+'"><span>'+(t.lbl?esc(s[1]):s[0])+'</span></label>').join(''))+'</div>'+(f.x?'<input id="qx" placeholder="Especifique cuál (opcional)" maxlength="100" style="margin-top:6px">':'')+'</div>').join('')+'</div>'
  +'<div class="pn"><div id="pg" class="sub"></div><div class="pbar"><i id="pb"></i></div><button class="btn" id="fin" disabled>Enviar mis respuestas</button><div id="er" class="note" hidden></div></div>';
+ 
  const F=FLD(t),Q=i=>document.querySelector('input[name=q'+i+']'),ck=i=>(document.querySelector('input[name=q'+i+']:checked')||{}).value;
  const vis=i=>F[i].dep===undefined||ck(F[i].dep)==='1';
  const val=i=>F[i].c?(Q(i).checked?'1':'0'):(vis(i)?ck(i):'2');
  const ans=()=>F.map((_,i)=>val(i)),xv=()=>$('qx')?$('qx').value.trim():'';
  const upd=()=>{F.forEach((f,i)=>{if(f.dep!==undefined)$('r'+i).hidden=!vis(i)});const req=F.map((_,i)=>i).filter(i=>!F[i].c&&vis(i)),n=req.filter(i=>val(i)!==undefined).length;$('pg').textContent='Respondidas: '+n+' de '+req.length;$('pb').style.width=(100*n/req.length)+'%';$('fin').disabled=!(n===req.length&&$('pn').value.trim()&&$('pc').value.trim()&&$('pk').checked)};
+ 
  $('app').addEventListener('input',upd);$('app').addEventListener('change',upd);upd();
+ $('pb0').onclick=()=>printDoc(v.t,null);
+
  $('fin').onclick=async()=>{$('fin').disabled=true;$('fin').textContent='Enviando…';
   try{const b=writeBatch(db);
    b.set(doc(db,'responses',ID),{t:v.t,name:$('pn').value.trim(),tipo:$('pd').value,doc:$('pc').value.trim(),ans:ans().join(''),...(xv()?{x:xv()}:{}),consent:true,at:serverTimestamp()});
    b.update(doc(db,'invites',ID),{status:'done',doneAt:serverTimestamp()});await b.commit();
-   $('app').innerHTML=HD('¡Gracias!',PRO)+'<div class="pn">Tus respuestas fueron enviadas a tu profesional.</div>'}
-  catch(e){$('er').hidden=false;$('er').textContent='No se pudo enviar. Intenta de nuevo.';$('fin').disabled=false;$('fin').textContent='Enviar mis respuestas'}}
+   
+   (()=>{const A=ans().join(''),M={name:$('pn').value.trim(),tipo:$('pd').value,doc:$('pc').value.trim(),x:xv(),at:Date.now()};
+    $('app').innerHTML=HD('¡Gracias!',PRO)+'<div class="pn">Tus respuestas fueron enviadas a tu profesional. Si quieres, guarda una copia tuya en PDF.</div><div class="pn"><button class="btn" id="pp">Descargar mis respuestas (PDF)</button></div>';
+    $('pp').onclick=()=>printDoc(v.t,A,M)})()
+  }
+  catch(e){$('er').hidden=false;$('er').textContent='No se pudo enviar. Intenta de nuevo.';$('fin').disabled=false;$('fin').textContent='Enviar mis respuestas'}
+ }
 }
 
-/* ===== PACIENTE · Consentimiento ===== */
+function patientSocio(v,t){
+ const today=new Date().toISOString().slice(0,10);
+ const fl=(k,l,x)=>`<div><label>${l}</label><input id="s_${k}" ${x||'maxlength="100"'}></div>`;
+ const yn=(k,l)=>`<div class="it"><h3 class="gh" style="margin-top:0">${l}</h3><div class="op"><label><input type="radio" name="${k}" value="1"><span>Sí</span></label><label><input type="radio" name="${k}" value="0"><span>No</span></label></div></div>`;
+ const ta=(k,h,ph)=>`<p class="hint">${h}</p><textarea id="s_${k}" rows="4" maxlength="800" placeholder="${ph}"></textarea>`;
+ const cvr=()=>'<div class="cv"><input maxlength="30" placeholder="Parentesco" aria-label="Parentesco"><input maxlength="60" placeholder="Nombre" aria-label="Nombre"><input inputmode="numeric" maxlength="3" placeholder="Edad" aria-label="Edad"><input maxlength="50" placeholder="Ocupación" aria-label="Ocupación"></div>';
+ 
+ $('app').innerHTML=HD(t.full,'Solicitado por '+v.n)+PD(t)
+ +`<div class="pn"><h2>Instrucciones</h2><p style="margin:0 0 6px">${esc(t.ins)}</p><button class="btn s sm" id="pb0" type="button">Imprimir formulario en blanco (PDF)</button>
+ <h3 class="gh">1. Datos generales</h3><p class="hint">Su nombre y documento ya los indicó arriba. Complete su información básica y la de su contacto de emergencia.</p>
+ <div class="r2">${fl('fnac','Fecha de nacimiento',`type="date" min="1900-01-01" max="${today}"`)}<div><label>Edad</label><input id="s_edad" readonly placeholder="Se calcula sola"></div>${fl('ocu','Ocupación')}${fl('tel','Número de teléfono','type="tel" inputmode="tel" maxlength="30"')}</div>
+ <label>Dirección de residencia</label><input id="s_dir" maxlength="200">
+ <div class="r2">${fl('ecn','Nombre del contacto de emergencia','maxlength="120"')}${fl('ect','Teléfono del contacto de emergencia','type="tel" inputmode="tel" maxlength="30"')}</div>
+ <h3 class="gh">2. Antecedentes de enfermedades</h3>${ta('enf','Enfermedades diagnosticadas a lo largo de la vida, una por línea, con la fecha del diagnóstico (ej.: Hipertensión – 2019). Si no tiene, déjelo en blanco.','Enfermedad – fecha')}
+ <div class="it" style="border:0">${yn('psi','3. ¿Anteriormente ha acudido a los servicios de Psicología/Psiquiatría?')}<div id="b_psi" hidden><h3 class="gh">3.1 Antecedentes de diagnósticos psicológicos/psiquiátricos</h3>${ta('dpsi','Diagnóstico psiquiátrico o impresión diagnóstica psicológica, uno por línea, con la fecha.','Diagnóstico – fecha')}</div></div>
+ <div class="it" style="border:0">${yn('med','4. ¿Toma algún medicamento actualmente?')}<div id="b_med" hidden><h3 class="gh">4.1 Medicamentos que toma actualmente</h3>${ta('dmed','Uno por línea, junto con la fecha en la que inició su consumo.','Medicamento – fecha de inicio')}</div></div>
+ <h3 class="gh">5. Antecedentes psiquiátricos familiares</h3>${ta('fam','Si existen antecedentes psiquiátricos en su familia, escríbalos uno por línea indicando el parentesco. Si no hay, déjelo en blanco.','Antecedente – parentesco')}
+ <div class="it" style="border:0">${yn('sus','6. ¿Consume alguna sustancia psicoactiva? (ejemplo: marihuana, cocaína, entre otros)')}</div>
+ <h3 class="gh">7. Características sociodemográficas</h3><p class="hint">Enliste las personas con las que vive actualmente y diligencie sus datos.</p>
+ <div id="cvs">${cvr().repeat(4)}</div><button class="btn s sm" id="addc" type="button">+ Agregar persona</button></div>`
+ +'<div class="pn"><div id="pg" class="sub"></div><div class="pbar"><i id="pb"></i></div><button class="btn" id="fin" disabled>Enviar mis respuestas</button><div id="er" class="note" hidden></div></div>';
+ 
+ const R=['fnac','ocu','tel','dir','ecn','ect'],g=k=>$('s_'+k).value.trim(),ck=k=>(document.querySelector('input[name='+k+']:checked')||{}).value;
+ const age=s=>{if(!s)return NaN;const b=new Date(s+'T00:00:00'),n=new Date();let a=n.getFullYear()-b.getFullYear();if(n.getMonth()<b.getMonth()||(n.getMonth()===b.getMonth()&&n.getDate()<b.getDate()))a--;return a};
+ const lines=x=>x.split('\n').map(y=>y.trim()).filter(Boolean).join('\n');
+ const conv=()=>[...document.querySelectorAll('#cvs .cv')].map(r=>[...r.querySelectorAll('input')].map(i=>i.value.replace(/\s+/g,' ').trim())).filter(r=>r.some(Boolean)).map(r=>r.join('\t')).join('\n');
+ const dat=()=>{const p=ck('psi'),m=ck('med');return{fnac:g('fnac'),edad:String(age(g('fnac'))),ocu:g('ocu'),tel:g('tel'),dir:g('dir'),ecn:g('ecn'),ect:g('ect'),enf:lines($('s_enf').value),psi:p,dpsi:p==='1'?lines($('s_dpsi').value):'',med:m,dmed:m==='1'?lines($('s_dmed').value):'',fam:lines($('s_fam').value),sus:ck('sus'),conv:conv()}};
+ 
+ const upd=()=>{const a=age(g('fnac')),okA=a>=0&&a<=120;$('s_edad').value=okA?a:'';$('b_psi').hidden=ck('psi')!=='1';$('b_med').hidden=ck('med')!=='1';
+  const req=[...R.map(k=>!!g(k)),!!ck('psi'),!!ck('med'),!!ck('sus')],n=req.filter(Boolean).length;
+  $('pg').textContent='Completados: '+n+' de '+req.length;$('pb').style.width=(100*n/req.length)+'%';
+  $('fin').disabled=!(n===req.length&&okA&&$('pn').value.trim()&&$('pc').value.trim()&&$('pk').checked)};
+  
+ $('app').addEventListener('input',upd);$('app').addEventListener('change',upd);upd();
+ $('pb0').onclick=()=>printDoc(v.t,null);
+ $('addc').onclick=()=>{const c=$('cvs');if(c.children.length<8)c.insertAdjacentHTML('beforeend',cvr());if(c.children.length>=8)$('addc').disabled=true};
+ 
+ $('fin').onclick=async()=>{$('fin').disabled=true;$('fin').textContent='Enviando…';
+  try{const D=dat(),N=$('pn').value.trim(),TP=$('pd').value,DC=$('pc').value.trim(),b=writeBatch(db);
+   b.set(doc(db,'responses',ID),{t:v.t,name:N,tipo:TP,doc:DC,ans:'',d:D,consent:true,at:serverTimestamp()});
+   b.update(doc(db,'invites',ID),{status:'done',doneAt:serverTimestamp()});await b.commit();
+   $('app').innerHTML=HD('¡Gracias!',PRO)+'<div class="pn">Tus respuestas fueron enviadas a tu profesional. Si quieres, guarda una copia tuya en PDF.</div><div class="pn"><button class="btn" id="pp">Descargar mis respuestas (PDF)</button></div>';
+   $('pp').onclick=()=>printDoc(v.t,null,{name:N,tipo:TP,doc:DC,d:D,at:Date.now()})}
+  catch(e){$('er').hidden=false;$('er').textContent='No se pudo enviar. Intenta de nuevo.';$('fin').disabled=false;$('fin').textContent='Enviar mis respuestas'}
+ }
+}
+
 function patientConsent(v,t){
  const fc = v.customFees || feesConfig;
  const form7 = `
@@ -187,9 +314,11 @@ function patientConsent(v,t){
 
  $('app').innerHTML=HD(t.full,'Solicitado por '+v.n)+PD(t)
  + '<div class="pn"><h2>Datos de Contacto</h2><label>Número de teléfono celular</label><input id="ptel" type="tel" maxlength="30"></div>'
- + '<div class="pn"><h2>Instrucciones</h2><p style="margin:0 0 6px">'+esc(t.ins)+'</p></div>'
+ + '<div class="pn"><h2>Instrucciones</h2><p style="margin:0 0 6px">'+esc(t.ins)+'</p><button class="btn s sm" id="pb0" type="button">Imprimir formulario en blanco (PDF)</button></div>'
  + '<div class="pn" style="background:#fff"><h2>Documento</h2>' + TXT_C1_5 + (v.showFees!==false?getTxtC6(fc):'') + form7 + '</div>'
  + '<div class="pn"><button class="btn" id="fin" disabled>Firmar y Enviar Documento</button><div id="er" class="note" hidden></div></div>';
+
+ $('pb0').onclick=()=>printDoc(v.t,null,{d:{customFees:fc, showFees:v.showFees!==false}});
 
  const updL = () => {
    $('lblN').textContent = $('pn').value.trim() || '___________________';
@@ -219,11 +348,14 @@ function patientConsent(v,t){
    $('fin').disabled=true; $('fin').textContent='Enviando y bloqueando...';
    try {
      const D = { tel: $('ptel').value.trim(), lugar: $('dLugar').value.trim(), showFees: v.showFees!==false, customFees: fc, sig: cv.toDataURL(), date: Date.now() };
+     const N=$('pn').value.trim(), TP=$('pd').value, DC=$('pc').value.trim();
      const b = writeBatch(db);
-     b.set(doc(db,'responses',ID), {t:v.t, name:$('pn').value.trim(), tipo:$('pd').value, doc:$('pc').value.trim(), ans:'', d:D, consent:true, at:serverTimestamp()});
+     b.set(doc(db,'responses',ID), {t:v.t, name:N, tipo:TP, doc:DC, ans:'', d:D, consent:true, at:serverTimestamp()});
      b.update(doc(db,'invites',ID), {status:'done', doneAt:serverTimestamp()});
      await b.commit();
-     $('app').innerHTML = HD('¡Gracias!', PRO)+'<div class="pn">Tu documento fue firmado exitosamente y enviado a tu profesional.</div>';
+     
+     $('app').innerHTML = HD('¡Gracias!', PRO)+'<div class="pn">Tu documento fue firmado exitosamente y enviado a tu profesional. Si quieres, guarda una copia tuya en PDF.</div><div class="pn"><button class="btn" id="pp">Descargar documento diligenciado (PDF)</button></div>';
+     $('pp').onclick=()=>printDoc(v.t,null,{name:N,tipo:TP,doc:DC,d:D,at:Date.now()});
    } catch(e) {
      $('er').hidden=false; $('er').textContent='No se pudo enviar. Intenta de nuevo.';
      $('fin').disabled=false; $('fin').textContent='Firmar y Enviar Documento';
@@ -232,9 +364,6 @@ function patientConsent(v,t){
  updL();
 }
 
-function patientSocio(v,t){
- // (Código paciente socio se mantiene estándar)
-}
 
 /* ===== PROFESIONAL ===== */
 const DOM='@consultorio.app'; 
@@ -288,7 +417,7 @@ function vInicio(){const a=Object.values(C.it),n=a.length,nw=unseen(),l=a.reduce
 function vEnviar(){
  const testKeys = ['dass21', 'aaq2'];
  return '<div class="pn"><h2>Elige la prueba psicométrica</h2>'+testKeys.map(k=>{const t=TESTS[k]; return '<label class="rc"><input type="radio" name="st" value="'+k+'"'+(selT===k?' checked':'')+'><b>'+esc(t.n)+'</b> — '+esc(t.full)+'<br><span class="sub">'+(t.nq||FLD(t).length)+UN(t)+' · '+INFO[k].per+'</span></label>'}).join('')
- +'<button class="btn big" id="mk" data-a="mk">Generar enlace único</button><p class="sub">Cada enlace sirve para una sola persona y vence en 30 días.</p><div id="er" class="note" hidden></div></div>'
+ +'<button class="btn big" id="mk" data-a="mk">Generar enlace único</button><button class="btn s" data-a="pb">Imprimir formulario en blanco (PDF)</button><p class="sub">Cada enlace sirve para una sola persona y vence en 30 días.</p><div id="er" class="note" hidden></div></div>'
  + renderLinks();
 }
 
@@ -320,7 +449,7 @@ function vOtrosDocs(){
  + '<label class="rc"><input type="radio" name="docSt" value="consent" '+(docSelT==='consent'?'checked':'')+'><b>Consentimiento Informado</b><br><span class="sub">Documento legal con firmas digitales</span></label>'
  + '<label class="rc"><input type="radio" name="docSt" value="socio" '+(docSelT==='socio'?'checked':'')+'><b>Información sociodemográfica</b><br><span class="sub">Formulario de datos personales y antecedentes</span></label>'
  + feesForm
- + '<button class="btn big" id="mkDoc" data-a="mkDoc">Generar enlace de documento</button><div id="er" class="note" hidden></div></div>'
+ + '<button class="btn big" id="mkDoc" data-a="mkDoc">Generar enlace de documento</button><button class="btn s" data-a="pbd">Imprimir formulario en blanco (PDF)</button><div id="er" class="note" hidden></div></div>'
  + renderLinks();
 }
 
@@ -341,9 +470,9 @@ const rowsHTML=(t,r)=>{
 };
 
 function listHTML(){const q=F.q.trim().toLowerCase();const a=Object.entries(C.it).filter(([,r])=>(!F.t||r.t===F.t)&&(!q||(r.name+' '+r.doc).toLowerCase().includes(q))).sort((x,y)=>y[1].at-x[1].at);
- return a.length?a.map(([id,r])=>{const t=TESTS[r.t];return '<details data-id="'+id+'"><summary><b>'+esc(r.name)+'</b> · '+esc(t.n)+' · '+fdt(r.at)+(seen.has(id)?'':'<span class="bg">nuevo</span>')+'</summary><p class="sub">'+esc(r.tipo)+' '+esc(r.doc)+'</p><table class="'+(t.lbl||t.socio||t.consent?'wide':'')+'">'+rowsHTML(t,r)+'</table><button class="btn sm s" data-a="del" data-id="'+id+'">Eliminar</button></details>'}).join(''):'<p class="sub">No hay respuestas para mostrar.</p>'}
+ return a.length?a.map(([id,r])=>{const t=TESTS[r.t];return '<details data-id="'+id+'"><summary><b>'+esc(r.name)+'</b> · '+esc(t.n)+' · '+fdt(r.at)+(seen.has(id)?'':'<span class="bg">nuevo</span>')+'</summary><p class="sub">'+esc(r.tipo)+' '+esc(r.doc)+'</p><table class="'+(t.lbl||t.socio||t.consent?'wide':'')+'">'+rowsHTML(t,r)+'</table><button class="btn sm s" data-a="pf" data-id="'+id+'">Imprimir diligenciado (PDF)</button><button class="btn sm s" data-a="pbr" data-id="'+id+'">Imprimir en blanco</button><button class="btn sm s" data-a="del" data-id="'+id+'">Eliminar</button></details>'}).join(''):'<p class="sub">No hay respuestas para mostrar.</p>'}
 function vResp(){return '<div class="pn"><h2>Respuestas y Documentos Recibidos</h2><div class="r2"><select id="ft"><option value="">Todos los registros</option>'+Object.entries(TESTS).map(([k,v])=>'<option value="'+k+'"'+(F.t===k?' selected':'')+'>'+esc(v.n)+'</option>').join('')+'</select><input id="fq" placeholder="Buscar por nombre o documento" value="'+esc(F.q)+'"></div><div id="ls">'+listHTML()+'</div></div>'}
-function vInst(){return Object.entries(TESTS).map(([k,t])=>'<div class="pn"><h2>'+esc(t.n)+'</h2><p style="margin:0 0 6px"><b>'+esc(t.full)+'</b></p><p class="sub">'+(t.nq||FLD(t).length)+UN(t)+' · Periodo: '+INFO[k].per+'</p><p style="font-size:13.5px">'+esc(INFO[k].corr)+'</p></div>').join('')}
+function vInst(){return Object.entries(TESTS).map(([k,t])=>'<div class="pn"><h2>'+esc(t.n)+'</h2><p style="margin:0 0 6px"><b>'+esc(t.full)+'</b></p><p class="sub">'+(t.nq||FLD(t).length)+UN(t)+' · Periodo: '+INFO[k].per+'</p><p style="font-size:13.5px">'+esc(INFO[k].corr)+'</p><button class="btn sm s" data-a="pb" data-t="'+k+'">Imprimir en blanco (PDF)</button></div>').join('')}
 
 async function onClick(e){
  const g=e.target.closest('[data-go]');if(g){V=g.dataset.go;if(g.dataset.t)selT=g.dataset.t;draw();return}
@@ -373,6 +502,25 @@ async function onClick(e){
     LK=LK.slice(0,30); save(); draw();
   }catch(x){b.disabled=false;$('er').hidden=false;$('er').textContent='No se pudo crear el enlace ('+(x.code||'error')+').'}
  }
+ 
+ if(a==='pb'){printDoc(b.dataset.t||selT,null);return;}
+ if(a==='pbd'){ // Para imprimir documentos administrativos en blanco desde la vista de creación
+   const targetT = docSelT;
+   let d = null;
+   if(targetT === 'consent'){
+     d = {
+       showFees: $('showFees') ? $('showFees').checked : true,
+       customFees: {
+         sv: $('f_sv').value.trim(), sp: $('f_sp').value.trim(), sd: $('f_sd').value.trim(), se: $('f_se').value.trim(),
+         pv: $('f_pv').value.trim(), pp: $('f_pp').value.trim(), pd: $('f_pd').value.trim(), pe: $('f_pe').value.trim()
+       }
+     };
+   }
+   printDoc(targetT, null, {d: d});
+   return;
+ }
+ if(a==='pf'&&r){printDoc(r.t,r.ans,{name:r.name,tipo:r.tipo,doc:r.doc,x:r.x,d:r.d,at:r.at});return;}
+ if(a==='pbr'&&r){printDoc(r.t,null,{d:r.d});return;} // Imprimir en blanco usando la config guardada
  
  if(a==='lk'){try{await navigator.clipboard.writeText(LK[+b.dataset.i].l);b.textContent='¡Copiado!'}catch(x){}}
  if(a==='sync'){b.disabled=true;try{const q=await getDocs(query(collection(db,'invites'),orderBy('createdAt','desc'),limit(30)));LK=q.docs.map(d=>{const v=d.data();return{id:d.id,l:location.origin+location.pathname+'?i='+d.id,t:v.t,at:v.createdAt?v.createdAt.toMillis():0,st:v.status,exp:v.exp?v.exp.toMillis():0}});save();draw()}catch(x){b.disabled=false;alert('No se pudo actualizar ('+(x.code||'error')+').')}return}
