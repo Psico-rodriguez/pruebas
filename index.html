@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pruebas psicométricas</title>
+<style>
+:root{--bg:#eef4fb;--pn:#fff;--tx:#14213d;--mu:#5b6b85;--bd:#cfdcee;--ac:#0d4a9e;--ac2:#2a8fdc}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1726;--pn:#17233a;--tx:#e6eefb;--mu:#9db0cf;--bd:#2c3d5c;--ac:#6db4f2;--ac2:#4aa3ea}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+.w{max-width:780px;margin:auto;padding:16px}.pn{background:var(--pn);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px}
+.hd{display:flex;gap:12px;align-items:center}.hd img{height:48px;max-width:120px;object-fit:contain}
+h1{font-size:20px;margin:0;color:var(--ac)}h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ac);margin:0 0 8px;border-bottom:1px solid var(--bd);padding-bottom:4px}
+.sub{color:var(--mu);font-size:13px;margin:2px 0}label{display:block;font-size:12px;color:var(--mu);margin:8px 0 2px}
+input,select{width:100%;padding:8px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:560px){.r2{grid-template-columns:1fr}}
+.btn{display:block;text-align:center;text-decoration:none;background:var(--ac);color:#fff;border:0;border-radius:8px;padding:10px 12px;font:inherit;font-weight:600;cursor:pointer;width:100%;margin-top:8px}
+.btn.s{background:transparent;color:var(--ac);border:1px solid var(--ac)}.btn[disabled]{opacity:.45;cursor:not-allowed}.btn.sm{width:auto;display:inline-block;padding:6px 10px;font-size:13px;margin:6px 6px 0 0}
+.note{font-size:12.5px;background:var(--bg);border-left:3px solid var(--ac2);padding:8px 10px;border-radius:6px;color:var(--mu);margin-top:10px}
+.it{padding:10px 0;border-bottom:1px solid var(--bd)}.it p{margin:0 0 6px}.op{display:flex;gap:6px;flex-wrap:wrap}.op label{margin:0;cursor:pointer}
+.op input{position:absolute;opacity:0;width:0;height:0}.op span{display:inline-block;min-width:40px;text-align:center;padding:7px 10px;border:1px solid var(--bd);border-radius:8px;font-weight:600}
+.op input:checked+span{background:var(--ac);color:#fff;border-color:var(--ac)}.op input:focus-visible+span{outline:2px solid var(--ac2)}
+.lg{font-size:12.5px;color:var(--mu);background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;margin:8px 0}
+.ck{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin-top:10px}.ck input{width:auto;margin-top:3px}
+.lk{word-break:break-all;font:12.5px/1.4 ui-monospace,Menlo,monospace;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:8px;margin-top:8px}
+details{border:1px solid var(--bd);border-radius:8px;margin:6px 0;padding:6px 10px}summary{cursor:pointer}.bg{background:var(--ac2);color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;margin-left:6px}
+table{border-collapse:collapse;width:100%;font-size:13px}td{padding:3px 6px;border-bottom:1px solid var(--bd)}td:last-child{text-align:center;font-weight:600;width:48px}
+
+.lg2{max-width:380px;margin:8vh auto 0}.lg2 .pn{text-align:center}.lg2 label{text-align:left}.lg2 img{height:56px;margin-bottom:6px}.lg2 .ck{justify-content:flex-start}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.top b{font-size:17px;color:var(--ac)}.top .hd{gap:10px}.top img{height:34px}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;padding-bottom:2px}.tabs button{flex:1;white-space:nowrap;background:var(--pn);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:9px 12px;font:inherit;font-weight:600;cursor:pointer}
+.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}.tabs .bg{background:#e5484d}
+.st{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}@media(max-width:560px){.st{grid-template-columns:1fr}}.st .pn{margin:0;text-align:center}.st b{display:block;font-size:26px;color:var(--ac)}
+.rc{display:block;border:2px solid var(--bd);border-radius:12px;padding:12px;margin:8px 0;cursor:pointer;background:var(--bg)}.rc input{width:auto;margin-right:8px}.rc:has(input:checked){border-color:var(--ac);background:var(--pn)}.rc b{color:var(--ac)}
+.row{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--bd);padding:8px 0}.row:last-child{border:0}
+.big{font-size:16px;padding:14px}.pbar{height:6px;background:var(--bd);border-radius:4px;overflow:hidden;margin:6px 0}.pbar i{display:block;height:100%;background:var(--ac);width:0}
+</style></head><body><div class="w" id="app"><div class="pn">Cargando…</div></div>
+<script type="module">
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import {getFirestore,doc,collection,getDoc,setDoc,writeBatch,query,where,orderBy,onSnapshot,Timestamp,serverTimestamp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+// 1) Pega aquí la configuración de tu app web de Firebase (ver LEEME.md)
+const FB={apiKey:"AIzaSyADVAj9cN9lP-yzbz8cJgWc1GsXJX5vqMY",authDomain:"pruebas-psicometricas-dc84e.firebaseapp.com",projectId:"pruebas-psicometricas-dc84e",appId:"1:690671217402:web:2708063ed0a220af01b743"};
+const PRO='Oscar Steven Rodriguez Bustos';
+const TESTS={
+dass21:{n:'DASS-21',full:'Escala de Depresión, Ansiedad y Estrés (DASS-21)',
+ ins:'Por favor lea las siguientes afirmaciones y elija el número (0, 1, 2 o 3) que indica en qué grado le ha ocurrido a usted esta afirmación durante la semana pasada.',
+ sc:[[0,'No me ha ocurrido'],[1,'Me ha ocurrido un poco, o durante parte del tiempo'],[2,'Me ha ocurrido bastante, o durante una buena parte del tiempo'],[3,'Me ha ocurrido mucho, o la mayor parte del tiempo']],
+ items:['Me ha costado mucho descargar la tensión','Me di cuenta que tenía la boca seca','No podía sentir ningún sentimiento positivo','Se me hizo difícil respirar','Se me hizo difícil tomar la iniciativa para hacer cosas','Reaccioné exageradamente en ciertas situaciones','Sentí que mis manos temblaban','He sentido que estaba gastando una gran cantidad de energía','Estaba preocupado por situaciones en las cuales podía tener pánico o en las que podría hacer el ridículo','He sentido que no había nada que me ilusionara','Me he sentido inquieto','Se me hizo difícil relajarme','Me sentí triste y deprimido','No toleré nada que no me permitiera continuar con lo que estaba haciendo','Sentí que estaba al punto de pánico','No me pude entusiasmar por nada','Sentí que valía muy poco como persona','He tendido a sentirme enfadado con facilidad','Sentí los latidos de mi corazón a pesar de no haber hecho ningún esfuerzo físico','Tuve miedo sin razón','Sentí que la vida no tenía ningún sentido']},
+aaq2:{n:'AAQ-II',full:'Cuestionario de Aceptación y Acción – II (AAQ-II)',
+ ins:'Debajo encontrará una lista de afirmaciones. Por favor, puntúe en qué grado cada afirmación ES VERDAD PARA USTED eligiendo un número de la escala.',
+ sc:[[1,'Nunca es verdad'],[2,'Muy raramente es verdad'],[3,'Raramente es verdad'],[4,'A veces es verdad'],[5,'Frecuentemente es verdad'],[6,'Casi siempre es verdad'],[7,'Siempre es verdad']],
+ items:['Mis experiencias y recuerdos dolorosos hacen que me sea difícil vivir la vida que querría.','Tengo miedo de mis sentimientos.','Me preocupa no ser capaz de controlar mis preocupaciones y sentimientos.','Mis recuerdos dolorosos me impiden llevar una vida plena.','Mis emociones interfieren en cómo me gustaría que fuera mi vida.','Parece que la mayoría de la gente lleva su vida mejor que yo.','Mis preocupaciones interfieren en el camino de lo que quiero conseguir.']}};
+const app=initializeApp(FB),auth=getAuth(app),db=getFirestore(app);
+const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ID=new URLSearchParams(location.search).get('i');
+const HD=(t,s)=>'<div class="pn hd"><img src="logo.png" alt="" onerror="this.remove()"><div><h1>'+esc(t)+'</h1><p class="sub">'+esc(s)+'</p></div></div>';
+const say=(t,m)=>{$('app').innerHTML=HD(t,PRO)+'<div class="pn">'+esc(m)+'</div>'};
+
+/* ===== PACIENTE ===== */
+async function patient(){
+ let v;try{const s=await getDoc(doc(db,'invites',ID));if(!s.exists())throw 0;v=s.data()}catch(e){return say('Enlace no válido','Este enlace no es válido o ya venció. Solicita uno nuevo a tu profesional.')}
+ if(v.status!=='pending')return say('Prueba ya enviada','Esta prueba ya fue respondida. ¡Gracias!');
+ const t=TESTS[v.t];$('app').innerHTML=HD(t.full,'Solicitado por '+v.n)
+ +'<div class="pn"><h2>Tus datos</h2><label>Nombres y apellidos</label><input id="pn" maxlength="120"><div class="r2"><div><label>Tipo de documento</label><select id="pd"><option>C.C.</option><option>T.I.</option><option>C.E.</option><option>Pasaporte</option><option>PPT</option></select></div><div><label>Número de documento</label><input id="pc" inputmode="numeric" maxlength="30"></div></div></div>'
+ +'<div class="pn"><h2>Consentimiento</h2><p style="font-size:13px;margin:0">Autorizo a mi profesional a recibir y tratar mis respuestas con fines exclusivamente clínicos, de manera confidencial y de acuerdo con la normatividad colombiana sobre protección de datos personales y secreto profesional. Entiendo que esta prueba es un instrumento de tamizaje y que, por sí sola, no constituye un diagnóstico.</p><label class="ck"><input type="checkbox" id="pk"> He leído y acepto lo anterior.</label></div>'
+ +'<div class="pn"><h2>Instrucciones</h2><p style="margin:0 0 6px">'+esc(t.ins)+'</p><div class="lg">'+t.sc.map(x=>'<b>'+x[0]+'</b> = '+esc(x[1])).join('<br>')+'</div>'
+ +t.items.map((x,i)=>'<div class="it"><p>'+(i+1)+'. '+esc(x)+'</p><div class="op">'+t.sc.map(s=>'<label><input type="radio" name="q'+i+'" value="'+s[0]+'"><span>'+s[0]+'</span></label>').join('')+'</div></div>').join('')+'</div>'
+ +'<div class="pn"><div id="pg" class="sub"></div><div class="pbar"><i id="pb"></i></div><button class="btn" id="fin" disabled>Enviar mis respuestas</button><div id="er" class="note" hidden></div></div>';
+ const ans=()=>t.items.map((_,i)=>(document.querySelector('input[name=q'+i+']:checked')||{}).value);
+ const upd=()=>{const n=ans().filter(Boolean).length;$('pg').textContent='Respondidas: '+n+' de '+t.items.length;$('pb').style.width=(100*n/t.items.length)+'%';$('fin').disabled=!(n===t.items.length&&$('pn').value.trim()&&$('pc').value.trim()&&$('pk').checked)};
+ $('app').addEventListener('input',upd);$('app').addEventListener('change',upd);upd();
+ $('fin').onclick=async()=>{$('fin').disabled=true;$('fin').textContent='Enviando…';
+  try{const b=writeBatch(db);
+   b.set(doc(db,'responses',ID),{t:v.t,name:$('pn').value.trim(),tipo:$('pd').value,doc:$('pc').value.trim(),ans:ans().join(''),consent:true,at:serverTimestamp()});
+   b.update(doc(db,'invites',ID),{status:'done',doneAt:serverTimestamp()});await b.commit();
+   say('¡Gracias!','Tus respuestas fueron enviadas a tu profesional. Ya puedes cerrar esta página.')}
+  catch(e){$('er').hidden=false;$('er').textContent='No se pudo enviar (posiblemente ya fue enviada o el enlace venció). Intenta de nuevo o contacta a tu profesional.';$('fin').disabled=false;$('fin').textContent='Enviar mis respuestas'}}
+}
+
+/* ===== PROFESIONAL ===== */
+const DOM='@consultorio.app'; // el "correo" interno es solo el usuario + este sufijo; nunca se envían correos
+const INFO={dass21:{per:'Última semana',ref:['Original: Antony et al. (1998), Psychological Assessment, 10, 176-181.','Colombia: Ruiz et al. (2017), Int. J. Psychol. Psychol. Ther., 17, 97-105.'],corr:'Tres subescalas: Depresión (ítems 3, 5, 10, 13, 16, 17, 21), Ansiedad (2, 4, 7, 9, 15, 19, 20) y Estrés (1, 6, 8, 11, 12, 14, 18). El total es la suma de todos los ítems.'},
+ aaq2:{per:'Actualidad',ref:['Original: Bond et al. (2011), Behavior Therapy, 42, 676-688.','España: Ruiz et al. (2013), Psicothema, 25, 123-129.','Colombia: Ruiz et al. (2016), The Psychological Record, 66, 429-437.'],corr:'Suma de los 7 ítems (rango 7 a 49). A mayor puntuación, mayor evitación experiencial; los promedios sin problema clínico rondan 18 a 23 y los clínicos superan 29.'}};
+const LS=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
+let V='inicio',selT='dass21',unsub=null,C={last:0,it:{}},seen=new Set(),LK=[],F={t:'',q:''};
+const save=()=>{try{localStorage.setItem('cr',JSON.stringify(C));localStorage.setItem('seen',JSON.stringify([...seen]));localStorage.setItem('lk',JSON.stringify(LK))}catch(e){}};
+const fdt=ms=>new Date(ms).toLocaleString('es-CO',{dateStyle:'medium',timeStyle:'short'});
+const unseen=()=>Object.keys(C.it).filter(i=>!seen.has(i)).length;
+const LOGO='<img src="logo.png" alt="" onerror="this.remove()">';
+function login(){$('app').innerHTML='<div class="lg2"><div class="pn">'+LOGO+'<h1>Pruebas psicométricas</h1><p class="sub">Ingresa con tu usuario y contraseña</p><label>Usuario</label><input id="us" autocomplete="username" autocapitalize="none" spellcheck="false"><label>Contraseña</label><input id="pw" type="password" autocomplete="current-password"><label class="ck"><input type="checkbox" id="sp"> Mostrar contraseña</label><button class="btn" id="go">Entrar</button><div id="er" class="note" hidden></div></div></div>';
+ $('sp').onchange=()=>$('pw').type=$('sp').checked?'text':'password';
+ const go=async()=>{$('go').disabled=true;$('er').hidden=true;try{await signInWithEmailAndPassword(auth,$('us').value.trim().toLowerCase()+DOM,$('pw').value)}catch(e){$('er').hidden=false;$('er').textContent=['auth/too-many-requests'].includes(e.code)?'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.':['auth/invalid-credential','auth/invalid-email','auth/user-not-found','auth/wrong-password','auth/missing-password'].includes(e.code)?'Usuario o contraseña incorrectos.':'No se pudo entrar ('+e.code+').';$('go').disabled=false}};
+ $('go').onclick=go;$('pw').onkeydown=e=>{if(e.key==='Enter')go()}}
+function shell(){C=LS('cr',C);seen=new Set(LS('seen',[]));LK=LS('lk',[]);
+ $('app').innerHTML='<div class="top"><div class="hd">'+LOGO+'<b>Pruebas psicométricas</b></div><button class="btn sm s" id="out" style="margin:0">Salir</button></div><nav class="tabs" id="tb"></nav><div id="view"></div>';
+ $('out').onclick=()=>{unsub&&unsub();unsub=null;localStorage.removeItem('cr');localStorage.removeItem('seen');C={last:0,it:{}};signOut(auth)};
+ $('tb').onclick=e=>{const b=e.target.closest('button');if(b){V=b.dataset.v;draw()}};
+ $('view').onclick=onClick;
+ $('view').oninput=e=>{if(e.target.id==='fq'){F.q=e.target.value;$('ls').innerHTML=listHTML()}};
+ $('view').onchange=e=>{if(e.target.name==='st')selT=e.target.value;if(e.target.id==='ft'){F.t=e.target.value;$('ls').innerHTML=listHTML()}};
+ // Solo se leen respuestas nuevas: la consulta parte de la última guardada en este dispositivo
+ unsub=onSnapshot(query(collection(db,'responses'),where('at','>=',Timestamp.fromMillis(C.last)),orderBy('at')),s=>{
+  s.docChanges().forEach(c=>{if(c.type==='removed'){delete C.it[c.doc.id];return}const d=c.doc.data();if(!d.at)return;const m=d.at.toMillis();C.it[c.doc.id]={t:d.t,name:d.name,tipo:d.tipo,doc:d.doc,ans:d.ans,at:m};C.last=Math.max(C.last,m)});save();if(V!=='enviar'&&V!=='inst')draw();else tabs()},
+  e=>{V='inicio';draw('<div class="note">No tienes permiso para leer las respuestas. Revisa que las reglas de seguridad (firestore.rules) estén publicadas con tu usuario.</div>')});
+ draw()}
+function tabs(){const n=unseen();document.title=(n?'('+n+') ':'')+'Pruebas psicométricas';$('tb').innerHTML=[['inicio','Inicio'],['enviar','Enviar prueba'],['resp','Respuestas'],['inst','Instrumentos']].map(([k,l])=>'<button data-v="'+k+'" class="'+(V===k?'on':'')+'">'+l+(k==='resp'&&n?'<span class="bg">'+n+'</span>':'')+'</button>').join('')}
+function draw(extra){tabs();const v=$('view');v.innerHTML=(extra||'')+({inicio:vInicio,enviar:vEnviar,resp:vResp,inst:vInst}[V])()}
+const go=(b,t)=>'<button class="btn big" data-go="'+b+'"'+(t?' data-t="'+t+'"':'')+'>';
+function vInicio(){const a=Object.values(C.it),n=a.length,nw=unseen(),l=a.reduce((m,r)=>Math.max(m,r.at),0);
+ return '<div class="st"><div class="pn"><b>'+n+'</b><span class="sub">Respuestas recibidas</span></div><div class="pn"><b>'+nw+'</b><span class="sub">Sin revisar</span></div><div class="pn"><b style="font-size:15px;padding:8px 0">'+(l?fdt(l):'—')+'</b><span class="sub">Última respuesta</span></div></div>'
+ +'<div class="pn" style="margin-top:14px"><h2>Por instrumento</h2>'+Object.entries(TESTS).map(([k,t])=>'<div class="row"><span>'+esc(t.full)+'</span><b>'+a.filter(r=>r.t===k).length+'</b></div>').join('')+'</div>'
+ +'<div class="r2">'+go('enviar')+'Enviar una prueba</button>'+go('resp').replace('btn big','btn big s')+'Ver respuestas</button></div>'}
+function vEnviar(){const r=LK[0];
+ return '<div class="pn"><h2>Elige el instrumento</h2>'+Object.entries(TESTS).map(([k,t])=>'<label class="rc"><input type="radio" name="st" value="'+k+'"'+(selT===k?' checked':'')+'><b>'+esc(t.n)+'</b> — '+esc(t.full)+'<br><span class="sub">'+t.items.length+' ítems · '+INFO[k].per+'</span></label>').join('')
+ +'<button class="btn big" id="mk" data-a="mk">Generar enlace único</button><p class="sub">No necesitas escribir el nombre del paciente: él lo ingresa al responder. Cada enlace sirve para una sola persona y vence en 30 días.</p><div id="er" class="note" hidden></div></div>'
+ +(LK.length?'<div class="pn"><h2>Últimos enlaces</h2>'+LK.map((x,i)=>'<div class="row"><div><b>'+esc(TESTS[x.t].n)+'</b> <span class="sub">'+fdt(x.at)+'</span><div class="lk">'+esc(x.l)+'</div></div><div><button class="btn sm" data-a="lk" data-i="'+i+'">Copiar</button><a class="btn sm s" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent('Hola, este es tu enlace para responder la prueba: '+x.l)+'">WhatsApp</a></div></div>').join('')+'</div>':'')}
+function listHTML(){const q=F.q.trim().toLowerCase();const a=Object.entries(C.it).filter(([,r])=>(!F.t||r.t===F.t)&&(!q||(r.name+' '+r.doc).toLowerCase().includes(q))).sort((x,y)=>y[1].at-x[1].at);
+ return a.length?a.map(([id,r])=>{const t=TESTS[r.t];return '<details data-id="'+id+'"><summary><b>'+esc(r.name)+'</b> · '+esc(t.n)+' · '+fdt(r.at)+(seen.has(id)?'':'<span class="bg">nuevo</span>')+'</summary><p class="sub">'+esc(r.tipo)+' '+esc(r.doc)+'</p><table>'+[...r.ans].map((v,i)=>'<tr><td>'+(i+1)+'. '+esc(t.items[i]||'')+'</td><td>'+v+'</td></tr>').join('')+'</table><button class="btn sm s" data-a="cp" data-id="'+id+'">Copiar respuestas</button><button class="btn sm s" data-a="del" data-id="'+id+'">Eliminar</button></details>'}).join(''):'<p class="sub">No hay respuestas para mostrar.</p>'}
+function vResp(){return '<div class="pn"><h2>Respuestas recibidas</h2><div class="r2"><select id="ft"><option value="">Todos los instrumentos</option>'+Object.entries(TESTS).map(([k,v])=>'<option value="'+k+'"'+(F.t===k?' selected':'')+'>'+esc(v.n)+'</option>').join('')+'</select><input id="fq" placeholder="Buscar por nombre o documento" value="'+esc(F.q)+'"></div><button class="btn s" data-a="ex">Exportar a CSV</button><div id="ls">'+listHTML()+'</div></div>'}
+function vInst(){return Object.entries(TESTS).map(([k,t])=>'<div class="pn"><h2>'+esc(t.n)+'</h2><p style="margin:0 0 6px"><b>'+esc(t.full)+'</b></p><p class="sub">'+t.items.length+' ítems · Periodo: '+INFO[k].per+' · Escala '+t.sc[0][0]+' a '+t.sc[t.sc.length-1][0]+'</p><p style="font-size:13.5px">'+esc(INFO[k].corr)+'</p><p class="sub">'+INFO[k].ref.map(esc).join('<br>')+'</p><details><summary>Ver ítems y escala</summary><p class="sub">'+t.sc.map(x=>x[0]+' = '+esc(x[1])).join(' · ')+'</p><table>'+t.items.map((x,i)=>'<tr><td>'+(i+1)+'. '+esc(x)+'</td></tr>').join('')+'</table></details><button class="btn sm" data-go="enviar" data-t="'+k+'">Enviar este instrumento</button></div>').join('')}
+async function onClick(e){
+ const g=e.target.closest('[data-go]');if(g){V=g.dataset.go;if(g.dataset.t)selT=g.dataset.t;draw();return}
+ const sm=e.target.closest('summary');if(sm&&sm.parentNode.dataset.id){seen.add(sm.parentNode.dataset.id);save();tabs();return}
+ const b=e.target.closest('button[data-a]');if(!b)return;const a=b.dataset.a,id=b.dataset.id,r=C.it[id];
+ if(a==='mk'){b.disabled=true;try{const d=doc(collection(db,'invites'));await setDoc(d,{t:selT,n:PRO,status:'pending',createdAt:serverTimestamp(),exp:Timestamp.fromMillis(Date.now()+30*864e5)});
+   LK.unshift({l:location.origin+location.pathname+'?i='+d.id,t:selT,at:Date.now()});LK=LK.slice(0,8);save();draw()}
+  catch(x){b.disabled=false;$('er').hidden=false;$('er').textContent='No se pudo crear el enlace ('+(x.code||'error')+'). Revisa que las reglas de seguridad estén publicadas.'}}
+ if(a==='lk'){try{await navigator.clipboard.writeText(LK[+b.dataset.i].l);b.textContent='¡Copiado!'}catch(x){}}
+ if(a==='cp'){const t=TESTS[r.t];try{await navigator.clipboard.writeText('RESPUESTAS '+t.n+'\n'+r.name+' · '+r.tipo+' '+r.doc+'\n'+fdt(r.at)+'\n'+[...r.ans].map((v,i)=>(i+1)+': '+v).join('\n'));b.textContent='¡Copiado!'}catch(x){}}
+ if(a==='del'&&confirm('¿Eliminar esta respuesta de forma definitiva?')){const w=writeBatch(db);w.delete(doc(db,'responses',id));w.delete(doc(db,'invites',id));await w.commit();delete C.it[id];save();draw()}
+ if(a==='ex'){const ft=F.t||'dass21',t=TESTS[ft],q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+  const rows=Object.entries(C.it).filter(([,r])=>r.t===ft).sort((x,y)=>x[1].at-y[1].at);
+  const out=[['fecha','codigo','nombre','tipo_doc','documento'].concat(t.items.map((_,i)=>'i'+(i+1))).map(q).join(',')].concat(rows.map(([id,r])=>[fdt(r.at),id,r.name,r.tipo,r.doc].concat([...r.ans]).map(q).join(',')));
+  const l=document.createElement('a');l.href=URL.createObjectURL(new Blob(['\ufeff'+out.join('\n')],{type:'text/csv'}));l.download='respuestas-'+t.n+'.csv';l.click()}}
+if(FB.apiKey==='PEGA_AQUI')$('app').innerHTML='<div class="pn">Falta pegar la configuración de Firebase en index.html (ver LEEME.md).</div>';
+else if(ID)patient();else onAuthStateChanged(auth,u=>u?shell():login());
+</script></body></html>
