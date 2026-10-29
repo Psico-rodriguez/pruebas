@@ -38,7 +38,7 @@ import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase
 import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import {getFirestore,doc,collection,getDoc,setDoc,writeBatch,query,where,orderBy,onSnapshot,Timestamp,serverTimestamp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 // 1) Pega aquí la configuración de tu app web de Firebase (ver LEEME.md)
-const FB={apiKey:"AIzaSyADVAj9cN9lP-yzbz8cJgWc1GsXJX5vqMY",authDomain:"pruebas-psicometricas-dc84e.firebaseapp.com",projectId:"pruebas-psicometricas-dc84e",appId:"1:690671217402:web:2708063ed0a220af01b743"};
+const FB={apiKey:"PEGA_AQUI",authDomain:"PEGA_AQUI",projectId:"PEGA_AQUI",appId:"PEGA_AQUI"};
 const PRO='Oscar Steven Rodriguez Bustos';
 const TESTS={
 dass21:{n:'DASS-21',full:'Escala de Depresión, Ansiedad y Estrés (DASS-21)',
@@ -86,9 +86,9 @@ const save=()=>{try{localStorage.setItem('cr',JSON.stringify(C));localStorage.se
 const fdt=ms=>new Date(ms).toLocaleString('es-CO',{dateStyle:'medium',timeStyle:'short'});
 const unseen=()=>Object.keys(C.it).filter(i=>!seen.has(i)).length;
 const LOGO='<img src="logo.png" alt="" onerror="this.remove()">';
-function login(){$('app').innerHTML='<div class="lg2"><div class="pn">'+LOGO+'<h1>Pruebas psicométricas</h1><p class="sub">Ingresa con tu usuario y contraseña</p><label>Usuario</label><input id="us" autocomplete="username" autocapitalize="none" spellcheck="false"><label>Contraseña</label><input id="pw" type="password" autocomplete="current-password"><label class="ck"><input type="checkbox" id="sp"> Mostrar contraseña</label><button class="btn" id="go">Entrar</button><div id="er" class="note" hidden></div></div></div>';
+function login(){$('app').innerHTML='<div class="lg2"><div class="pn">'+LOGO+'<h1>Pruebas psicométricas</h1><p class="sub">Ingresa con tu usuario (o correo) y contraseña</p><label>Usuario o correo</label><input id="us" autocomplete="username" autocapitalize="none" spellcheck="false"><label>Contraseña</label><input id="pw" type="password" autocomplete="current-password"><label class="ck"><input type="checkbox" id="sp"> Mostrar contraseña</label><button class="btn" id="go">Entrar</button><div id="er" class="note" hidden></div></div></div>';
  $('sp').onchange=()=>$('pw').type=$('sp').checked?'text':'password';
- const go=async()=>{$('go').disabled=true;$('er').hidden=true;try{await signInWithEmailAndPassword(auth,$('us').value.trim().toLowerCase()+DOM,$('pw').value)}catch(e){$('er').hidden=false;$('er').textContent=['auth/too-many-requests'].includes(e.code)?'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.':['auth/invalid-credential','auth/invalid-email','auth/user-not-found','auth/wrong-password','auth/missing-password'].includes(e.code)?'Usuario o contraseña incorrectos.':'No se pudo entrar ('+e.code+').';$('go').disabled=false}};
+ const go=async()=>{$('go').disabled=true;$('er').hidden=true;try{await signInWithEmailAndPassword(auth,(v=>v.includes('@')?v:v+DOM)($('us').value.trim().toLowerCase()),$('pw').value)}catch(e){$('er').hidden=false;$('er').textContent=['auth/too-many-requests'].includes(e.code)?'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.':['auth/invalid-credential','auth/invalid-email','auth/user-not-found','auth/wrong-password','auth/missing-password'].includes(e.code)?'Usuario o contraseña incorrectos (revisa que el usuario exista en Firebase → Authentication → Usuarios).':'No se pudo entrar ('+e.code+').';$('go').disabled=false}};
  $('go').onclick=go;$('pw').onkeydown=e=>{if(e.key==='Enter')go()}}
 function shell(){C=LS('cr',C);seen=new Set(LS('seen',[]));LK=LS('lk',[]);
  $('app').innerHTML='<div class="top"><div class="hd">'+LOGO+'<b>Pruebas psicométricas</b></div><button class="btn sm s" id="out" style="margin:0">Salir</button></div><nav class="tabs" id="tb"></nav><div id="view"></div>';
