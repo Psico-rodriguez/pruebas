@@ -73,7 +73,29 @@ socio:{n:'Información sociodemográfica',full:'Información sociodemográfica',
  ins:'Este formulario recoge datos básicos e información de interés para el proceso de evaluación, la cual permitirá guiar el proceso de intervención. Por favor lea con atención cada pregunta y responda.',
  f:[{n:'1',q:'Datos generales'},{n:'2',q:'Antecedentes de enfermedades'},{n:'3',q:'Atención previa en Psicología/Psiquiatría y diagnósticos (3.1)'},{n:'4',q:'Medicamentos actuales y fecha de inicio (4.1)'},{n:'5',q:'Antecedentes psiquiátricos familiares'},{n:'6',q:'Consumo de sustancias psicoactivas'},{n:'7',q:'Características sociodemográficas (personas con las que vive)'}]},
 consent:{n:'Consentimiento Informado',full:'Consentimiento Informado - Servicio de Psicología',consent:true,nq:1,
- ins:'Por favor lea atentamente el siguiente documento que tiene como objetivo explicar el uso y confidencialidad de sus datos, así como sus derechos y compromisos con respecto al proceso de atención psicológica. Si tiene cualquier duda, puede indicarla antes de firmar el documento.'}
+ ins:'Por favor lea atentamente el siguiente documento que tiene como objetivo explicar el uso y confidencialidad de sus datos, así como sus derechos y compromisos con respecto al proceso de atención psicológica. Si tiene cualquier duda, puede indicarla antes de firmar el documento.'},
+sogs: {
+  n: 'SOGS', full: 'Cuestionario de Juego Patológico de South Oaks (SOGS)', lbl: true,
+  ins: 'Por favor, lea cada pregunta cuidadosamente y responda con honestidad sobre su comportamiento relacionado con el juego y las apuestas.',
+  f: [
+    ...['a. Jugar a las cartas por dinero','b. Apostar a caballos, perros u otros animales','c. Apostar en deportes','d. Jugar a los dados por dinero','e. Apostar en casinos (ruleta, blackjack, etc.)','f. Jugar a la lotería o chance','g. Jugar al bingo por dinero','h. Jugar en el mercado de valores o materias primas','i. Jugar en máquinas tragamonedas o póker en video','j. Apostar en juegos de habilidad (billar, bolos, etc.)','k. Comprar billetes de raspa y gana','l. Jugar en internet por dinero'].map((q, i) => ({ q, o: [[0,'Nunca'],[1,'Menos de 1 vez a la semana'],[2,'1 vez a la semana o más']], h: i === 0 ? '1. Indique con qué frecuencia ha participado en las siguientes actividades:' : undefined })),
+    { q: '2. ¿Cuál es la mayor cantidad de dinero que ha apostado en un solo día?', o: [[0,'Nunca he apostado'],[1,'Menos de $10.000'],[2,'Entre $10.001 y $100.000'],[3,'Entre $100.001 y $1.000.000'],[4,'Entre $1.000.001 y $10.000.000'],[5,'Más de $10.000.000'],[6,'No lo recuerdo']] },
+    ...['Padre','Madre','Hermano/a','Cónyuge o pareja','Hijo/a','Otro pariente','Un amigo/a','Alguien más importante en mi vida'].map((q, i) => ({ q, c: true, h: i === 0 ? '3. ¿Cuáles de las siguientes personas en su vida tiene (o ha tenido) un problema con el juego?' : undefined })),
+    { q: '4. Cuando apuesta, ¿con qué frecuencia vuelve otro día para recuperar el dinero que perdió?', o: [[0,'Nunca'],[1,'Algunas veces'],[2,'La mayoría de las veces'],[3,'Siempre']] },
+    { q: '5. ¿Alguna vez ha afirmado estar ganando dinero con las apuestas cuando en realidad estaba perdiendo?', o: [[0,'Nunca'],[1,'Sí, menos de la mitad de las veces'],[2,'Sí, la mayoría de las veces']] },
+    { q: '6. ¿Siente que alguna vez ha tenido un problema con el juego o las apuestas?', o: [[0,'No'],[1,'Sí, en el pasado'],[2,'Sí, actualmente']] },
+    { q: '7. ¿Alguna vez ha apostado más de lo que tenía planeado?', c: true },
+    { q: '8. ¿La gente ha criticado sus apuestas o le han dicho que tiene un problema de juego?', c: true },
+    { q: '9. ¿Alguna vez se ha sentido culpable por la forma en que apuesta o por lo que le ocurre al apostar?', c: true },
+    { q: '10. ¿Alguna vez ha sentido que le gustaría dejar de apostar, pero no creía que fuera capaz de hacerlo?', c: true },
+    { q: '11. ¿Alguna vez ha ocultado signos de apuestas (dinero, billetes) a su familia?', c: true },
+    { q: '12. ¿Alguna vez ha discutido con personas con las que vive sobre cómo maneja el dinero?', c: true },
+    { q: '13. (Si respondió afirmativo a la 12) ¿Las discusiones sobre dinero estaban centradas en sus apuestas?', o: [[0,'No aplica / No hemos discutido'],[1,'Sí'],[2,'No']] },
+    { q: '14. ¿Alguna vez ha pedido dinero prestado y no lo ha devuelto como resultado de sus apuestas?', c: true },
+    { q: '15. ¿Alguna vez ha perdido tiempo de trabajo o de estudio debido a las apuestas?', c: true },
+    ...['a. Dinero de la casa (para gastos diarios)','b. Su cónyuge o pareja','c. Otros familiares','d. Bancos o cooperativas','e. Tarjetas de crédito','f. Prestamistas informales','g. Vendiendo propiedades, acciones u otros bienes','h. Retirando dinero de ahorros o jubilación','i. Pidiendo préstamos sobre seguros de vida','j. Girando cheques sin fondos'].map((q, i) => ({ q, c: true, h: i === 0 ? '16. Si alguna vez pidió dinero prestado para apostar, ¿de dónde lo obtuvo?' : undefined }))
+  ]
+}
 };
 
 const SDL=[['fnac','Fecha de nacimiento'],['edad','Edad'],['ocu','Ocupación'],['tel','Teléfono'],['dir','Dirección de residencia'],['ecn','Contacto de emergencia'],['ect','Teléfono del contacto de emergencia'],['enf','Antecedentes de enfermedades'],['psi','¿Ha acudido antes a Psicología/Psiquiatría?'],['dpsi','Diagnósticos psicológicos/psiquiátricos previos'],['med','¿Toma medicamentos actualmente?'],['dmed','Medicamentos y fecha de inicio'],['fam','Antecedentes psiquiátricos familiares'],['sus','¿Consume sustancias psicoactivas?'],['conv','Personas con las que vive']];
@@ -370,7 +392,8 @@ const DOM='@consultorio.app';
 const INFO={dass21:{per:'Última semana',ref:['Original: Antony et al. (1998).'],corr:'Tres subescalas.'},
  aaq2:{per:'Actualidad',ref:['Original: Bond et al. (2011).'],corr:'Suma de los 7 ítems.'},
  socio:{per:'Al momento de responder',ref:['Formato propio del consultorio.'],corr:'Formulario sociodemográfico de datos básicos y antecedentes.'},
- consent:{per:'Al momento de responder',ref:['Documento legal propio del consultorio.'],corr:'Consentimiento informado digital.'}
+ consent:{per:'Al momento de responder',ref:['Documento legal propio del consultorio.'],corr:'Consentimiento informado digital.'},
+ sogs:{per:'A lo largo de la vida / Actualidad',ref:['Lesieur & Blume (1987). South Oaks Gambling Screen.'],corr:'Un puntaje > 5 sugiere ludopatía.'}
 };
 
 const LS=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
@@ -415,7 +438,7 @@ function vInicio(){const a=Object.values(C.it),n=a.length,nw=unseen(),l=a.reduce
  +'<div class="r2">'+go('enviar')+'Enviar una prueba</button>'+go('docs').replace('btn big','btn big s')+'Otros documentos</button></div>'}
 
 function vEnviar(){
- const testKeys = ['dass21', 'aaq2'];
+ const testKeys = ['dass21', 'aaq2', 'sogs'];
  return '<div class="pn"><h2>Elige la prueba psicométrica</h2>'+testKeys.map(k=>{const t=TESTS[k]; return '<label class="rc"><input type="radio" name="st" value="'+k+'"'+(selT===k?' checked':'')+'><b>'+esc(t.n)+'</b> — '+esc(t.full)+'<br><span class="sub">'+(t.nq||FLD(t).length)+UN(t)+' · '+INFO[k].per+'</span></label>'}).join('')
  +'<button class="btn big" id="mk" data-a="mk">Generar enlace único</button><button class="btn s" data-a="pb">Imprimir formulario en blanco (PDF)</button><p class="sub">Cada enlace sirve para una sola persona y vence en 30 días.</p><div id="er" class="note" hidden></div></div>'
  + renderLinks();
